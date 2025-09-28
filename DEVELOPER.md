@@ -1,5 +1,7 @@
 # 🌐 ISP Management Backend System
 
+
+
 <div align="center">
 
 ![Node.js](https://img.shields.io/badge/Node.js-16.x+-339933?style=for-the-badge&logo=node.js&logoColor=white)
@@ -194,18 +196,6 @@ cors              // Cross-Origin Resource Sharing
 
 ## 🗄️ Database Design
 
-### Collections Architecture
-
-```mermaid
-erDiagram
-    SuperAdmin ||--o{ Branch : manages
-    Branch ||--|| Admin : has
-    Branch ||--o{ Customer : contains
-    Customer ||--|| Package : subscribes
-    Admin ||--o{ Ticket : reports
-    Branch ||--o{ Notification : receives
-```
-
 ### Core Collections Schema
 
 #### SuperAdmin Collection
@@ -373,7 +363,6 @@ isp-management-backend/
 ### Base URL Structure
 ```
 Development: http://localhost:5000/api
-Production:  https://your-domain.com/api
 ```
 
 ### Authentication Header
@@ -569,16 +558,7 @@ UPLOAD_PATH=./uploads
 MAX_FILE_SIZE=10000000
 ```
 
-#### 3️⃣ Database Setup
-```bash
-# Start MongoDB service
-sudo systemctl start mongod
-
-# Initialize database with seed data
-npm run seed
-```
-
-#### 4️⃣ Development Server
+#### 3️⃣ Development Server
 ```bash
 # Start development server
 npm run dev
@@ -593,23 +573,9 @@ npm run dev
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seeds/seedRunner.js",
-    "seed:fresh": "node seeds/seedRunner.js --fresh",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "seed": "node seeds/seedRunner.js"
   }
 }
-```
-
-### Quick Testing
-```bash
-# Test server health
-curl http://localhost:5000/api/health
-
-# Test authentication (use seeded admin credentials)
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@isp.com","password":"admin123"}'
 ```
 
 ---
