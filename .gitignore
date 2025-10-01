@@ -1,1 +1,2 @@
-/node_modules
+# removing node modules 
+node_modules/
