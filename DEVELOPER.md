@@ -19,9 +19,11 @@
 
 ### 🚀 Quick Navigation
 
-| [📖 Overview](#-project-overview) | [🎯 Problem](#-problem-statement) | [🏗️ Architecture](#️-system-architecture) | [⚡ Features](#-core-features) |
-|---|---|---|---|
-| [🛠️ Tech Stack](#️-technology-stack) | [📡 API Docs](#-api-documentation) | [📂 Structure](#-project-structure) | [🚀 Setup](#-setup-instructions) |
+| [📖 Overview](#-project-overview)               | [🎯 Problem](#-problem-statement)                                                                | [🏗️ Architecture](#️-system-architecture)                               | [⚡ Features](#-core-features)    |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | -------------------------------- |
+| [🛠️ Tech Stack](#️-technology-stack)           | [📡 API Docs](#-api-documentation)                                                               | [📂 Structure](#-project-structure)                                      | [🚀 Setup](#-setup-instructions) |
+| [📋 Development Modules](#-development-modules) | [👥 Team Assignment, Workflow, Modules & Branches](#-team-assignment-workflow-modules--branches) | [📅 Development Order & Dependencies](#-development-order--dependencies) |                                  |
+
 
 </div>
 
@@ -629,40 +631,44 @@ npm run dev
 
 ---
 
-# 👥 Team Assignment & Workflow
+# 👥 Team Assignment, Workflow, Modules & Branches
 
 We are following a structured and collaborative development workflow. Each member is assigned specific modules with clear responsibilities. Some modules depend on others, so we will build them in the correct order to ensure smooth integration.
 
 ---
 
-## 🔑 Team Members & Module Ownership
-
 ### **Okasha Nadeem (Project Manager – Jira)**
 
-* [Module 1: Foundation Setup ⚙️](#module-1-foundation--setup-)
-* [Module 3: Super Admin Management 👑](#module-3-super-admin-management-)
-* [Module 5: Ticket Management 🎫](#module-5-ticket-management-)
-* [Module 8: Seed Data & Static Resources 🌱](#module-8-seed-data--static-resources-)
-* [Module 9: Testing & Documentation 🧪](#module-9-testing--documentation-)
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+* [Module 1: Foundation Setup ⚙️](#module-1-foundation--setup-) → `main`
+* [Module 3: Super Admin Management 👑](#module-3-super-admin-management-) → `feature/super-admin`
+* [Module 5: Ticket Management 🎫](#module-5-ticket-management-) → `feature/ticket-management`
+* [Module 8: Seed Data & Static Resources 🌱](#module-8-seed-data--static-resources-) → `feature/seed-data`
+* [Module 9: Documentation 📄](#module-9-testing--documentation-) → `main`
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+
+---
 
 ### **Noman**
 
-* [Module 2: Authentication & Security 🔐](#module-2-authentication--security-)
-* [Module 6: Analytics & Reporting 📊](#module-6-analytics--reporting-)
-* [Module 7: Automation & Notifications 🤖 (NodeMailer)](#module-7-automation--notifications-)
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+* [Module 2: Authentication & Security 🔐](#module-2-authentication--security-) → `feature/authentication-security`
+* [Module 6: Analytics 📊](#module-6-analytics--reporting-) → `feature/analytics`
+* [Module 7: Notifications (NodeMailer) 📧](#module-7-automation--notifications-) → `feature/notifications-nodemailer`
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+
+---
 
 ### **Umair**
 
-* [Module 4: Branch Admin & Customer Management 👥](#module-4-branch-admin--customer-management-)
-* [Module 9: Testing & Documentation 🧪](#module-9-testing--documentation-)
-* [Module 7: Automation & Notifications 🤖 (Cron Jobs)](#module-7-automation--notifications-)
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+* [Module 4: Branch Admin & Customer Management 👥](#module-4-branch-admin--customer-management-) → `feature/branch-admin`
+* [Module 7: Automation (Cron Jobs) ⏲️](#module-7-automation--notifications-) → `feature/automation-cron`
+* [Module 9: Testing 🧪](#module-9-testing--documentation-) → `feature/testing`
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+
+---
 
 ### **Frontend (Entire Team – if time permits)**
 
-* [Module 11: Frontend Planning 🎨](#module-11-frontend-planning-)
+* [Module 11: Frontend Planning 🎨](#module-11-frontend-planning-) → `feature/frontend`
 
 ---
 
