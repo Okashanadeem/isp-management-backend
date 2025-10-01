@@ -222,7 +222,11 @@ cors              // Cross-Origin Resource Sharing
   location: {
     address: String,
     city: String,
-    coordinates: [Number] // [longitude, latitude]
+    coordinates: [Number], // [longitude, latitude]
+    geolocation: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: [Number] // [longitude, latitude]
+    }
   },
   bandwidth: {
     allocated: Number,    // Total allocated GB (hardcoded)
@@ -289,9 +293,7 @@ isp-management-backend/
 │   ├── authController.js              # Authentication & JWT handling
 │   ├── superAdminController.js        # Branch management & analytics
 │   ├── adminController.js             # Customer & subscription management
-│   ├── customerController.js          # Customer profile & service history
-│   ├── notificationController.js      # Email notifications & alerts
-│   └── systemController.js            # Health checks & automation
+│   └── customerController.js          # Customer profile & service history
 │
 ├── validators/                        # Input validation schemas
 │   ├── authValidator.js               # Authentication validation
@@ -303,34 +305,26 @@ isp-management-backend/
 │   ├── userModel.js                   # SuperAdmin/Admin authentication
 │   ├── branchModel.js                 # Branch management schema
 │   ├── customerModel.js               # Customer & subscription schema
-│   ├── packageModel.js                # Internet packages schema
-│   └── notificationModel.js           # Notifications log schema
+│   └── packageModel.js                # Internet packages schema
 │
 ├── routes/                            # API route definitions
 │   ├── authRoutes.js                  # /api/auth → authentication
 │   ├── superAdminRoutes.js            # /api/superadmin → branch management
 │   ├── adminRoutes.js                 # /api/admin → customer management
-│   ├── customerRoutes.js              # /api/customers → customer operations
-│   └── notificationRoutes.js          # /api/notifications → messaging
+│   └── customerRoutes.js              # /api/customers → customer operations
 │
 ├── middlewares/                       # Express middlewares
 │   ├── authMiddleware.js              # JWT validation & user attachment
 │   ├── roleMiddleware.js              # Role-based access control
 │   ├── validateMiddleware.js          # Input validation middleware
 │   ├── uploadMiddleware.js            # File upload configuration
-│   ├── rateLimitMiddleware.js         # API rate limiting
 │   └── errorMiddleware.js             # Global error handling
 │
 ├── config/                            # Configuration files
 │   ├── db.js                          # MongoDB connection setup
 │   ├── email.js                       # Nodemailer configuration
-│   ├── cron.js                        # Cron jobs for automation
-│   └── env.js                         # Environment variables loader
+│   └── cron.js                        # Cron jobs for automation
 │
-├── services/                          # Helper services
-│   ├── emailService.js                # Email notification service
-│   ├── reportService.js               # Analytics & reporting service
-│   └── backupService.js               # System backup service
 │
 ├── seeds/                             # Database seed data
 │   ├── superAdminSeed.js              # Default super admin accounts
@@ -339,17 +333,12 @@ isp-management-backend/
 │   ├── customerSeed.js                # Demo customer accounts
 │   └── seedRunner.js                  # Seed execution script
 │
-├── utils/                             # Utility functions
-│   ├── logger.js                      # Application logging system
-│   ├── response.js                    # Standard API response format
-│   └── constants.js                   # Application constants
-│
 ├── postman-collection/                # API testing collection
 │   └── isp-api.postman_collection.json
 │
 ├── uploads/                           # Customer document storage
 │
-├── .env.example                       # Environment variables template
+├── .env                               # Environment variables
 ├── .gitignore                         # Git ignore configuration
 ├── package.json                       # Dependencies & scripts
 ├── README.md                          # Project documentation
@@ -417,7 +406,6 @@ Content-Type: application/json
 | POST | `/admin/customers` | Add new customer | Customer data |
 | PUT | `/admin/customers/:id` | Update customer | Customer ID |
 | POST | `/admin/customers/:id/documents` | Upload documents | File upload |
-| POST | `/admin/tickets` | Report issue | Ticket data |
 
 #### 👥 Customer Management Endpoints
 | Method | Endpoint | Description | Query Parameters |
@@ -429,14 +417,29 @@ Content-Type: application/json
 | POST | `/customers/:id/suspend` | Suspend service | - |
 | POST | `/customers/:id/activate` | Activate service | - |
 
+#### 🎫 Ticket Management Endpoints
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| POST | `/admin/tickets` | Create a new ticket and assign to Super Admin | Branch Admin |
+| GET | `/admin/tickets/:id` | View status of a specific ticket (updated by Super Admin) | Branch Admin |
+| GET | `/superadmin/tickets` | View all tickets assigned by different branch admins | Super Admin |
+| GET | `/superadmin/tickets/:id` | View details of a specific ticket | Super Admin |
+| PUT | `/superadmin/tickets/:id/status` | Update status of a ticket (`acknowledged`, `in progress`, `done`) | Super Admin |
+
+
 #### 📊 Analytics & Reporting Endpoints
-| Method | Endpoint | Description | Parameters |
-|--------|----------|-------------|------------|
-| GET | `/analytics/customers` | Customer analytics | `branch, period` |
-| GET | `/analytics/bandwidth` | Bandwidth usage | `branch, period` |
-| GET | `/analytics/performance` | Performance metrics | `branch, metric` |
-| GET | `/reports/monthly` | Monthly report | `month, year, branch` |
-| GET | `/reports/export` | Export data | `format, type` |
+
+| Role                | Method | Endpoint                            | Description                         | Parameters                   |
+| ------------------- | ------ | ----------------------------------- | ----------------------------------- | ---------------------------- |
+| **Super Admin**  | GET    | `/superadmin/analytics/customers`   | View analytics of all customers     | `from, to, branch(optional)` |
+| **Super Admin**  | GET    | `/superadmin/analytics/bandwidth`   | Monitor bandwidth across branches   | `from, to, branch(optional)` |
+| **Super Admin**  | GET    | `/superadmin/analytics/performance` | Compare performance across branches | `from, to, metric`           |
+| **Super Admin**  | GET    | `/superadmin/analytics/revenue`     | Track system-wide revenue trends    | `from, to`                   |
+| **Branch Admin** | GET    | `/branch/analytics/customers`       | Analytics of customers in branch    | `from, to`                   |
+| **Branch Admin** | GET    | `/branch/analytics/bandwidth`       | Bandwidth usage of branch           | `from, to`                   |
+| **Branch Admin** | GET    | `/branch/analytics/performance`     | Performance metrics of branch       | `from, to, metric`           |
+| **Branch Admin** | GET    | `/branch/analytics/subscriptions`   | Track subscription renewals/expiry  | `from, to, status(optional)` |
 
 ---
 
@@ -444,71 +447,11 @@ Content-Type: application/json
 
 Our system uses pre-configured seed data for quick deployment and testing. All bandwidth allocations and resources are statically defined.
 
-### Seed Data Structure
-
-#### 🏢 Branch Seed Data
-```javascript
-// branches with hardcoded bandwidth allocation
-{
-  name: "Lahore Main Branch",
-  location: {
-    address: "Main Boulevard, Gulberg",
-    city: "Lahore",
-    coordinates: [74.3587, 31.5204]
-  },
-  bandwidth: {
-    allocated: 1000, // 1TB hardcoded
-    used: 0,
-    remaining: 1000
-  },
-  status: "active"
-}
-```
-
-#### 📦 Package Seed Data
-```javascript
-// Predefined internet packages
-{
-  name: "Basic Plan",
-  speed: "10 Mbps",
-  bandwidth: 50, // 50GB hardcoded
-  price: 2000,
-  features: ["24/7 Support", "Basic Speed"],
-  isActive: true
-}
-```
-
-#### 👥 Customer Seed Data
-```javascript
-// Sample customers with hardcoded allocations
-{
-  personalInfo: {
-    name: "Ahmed Hassan",
-    cnic: "35201-1234567-8",
-    phone: "+92-300-1234567",
-    email: "ahmed@example.com"
-  },
-  bandwidth: {
-    allocated: 50, // Package bandwidth (hardcoded)
-    used: 15,
-    resetDate: Date
-  }
-}
-```
-
 ### Running Seed Data
 
 ```bash
 # Run all seed files
 npm run seed
-
-# Run specific seed
-npm run seed:branches
-npm run seed:packages
-npm run seed:customers
-
-# Clear and reseed database
-npm run seed:fresh
 ```
 
 ---
@@ -582,65 +525,195 @@ npm run dev
 
 ## 📋 Development Modules
 
-### **Module 1: Foundation & Setup** ⚙️
-- Project architecture & environment setup
-- Express.js server & MongoDB connection
-- Folder structure & configuration
-- Git workflow & documentation
+
+### **Module 1: Foundation Setup** ⚙️
+
+* Project architecture & environment setup
+* Express.js server & MongoDB connection
+* Folder structure & configuration
+* Git workflow & documentation
+
+---
 
 ### **Module 2: Authentication & Security** 🔐
-- JWT authentication & refresh tokens
-- Role-based access control
-- Password hashing & validation
-- Security middleware & rate limiting
+
+* JWT authentication & refresh tokens
+* Role-based access control
+* Password hashing & validation
+* Security middleware & rate limiting
+
+**API End Point Quick Link:** [Authentication Endpoints](#-authentication-endpoints)
+---
 
 ### **Module 3: Super Admin Management** 👑
-- Branch CRUD operations & mapping
-- Bandwidth allocation & tracking
-- Admin assignment system
-- Analytics dashboard
+
+* Branch CRUD operations & mapping
+* Bandwidth allocation & tracking
+* Admin assignment system
+* Analytics dashboard
+
+**API End Point Quick Link:** [Super Admin Endpoints](#-super-admin-endpoints)
+---
 
 ### **Module 4: Branch Admin & Customer Management** 👥
-- Customer CRUD operations
-- Subscription management & renewals
-- Document upload & storage
-- Package management & service history
 
-### **Module 5: Analytics & Reporting** 📊
-- Performance tracking & analysis
-- Customer usage monitoring
-- Branch performance comparison
-- Business intelligence tools
+* Customer CRUD operations
+* Subscription management & renewals
+* Document upload & storage
+* Package management & service history
 
-### **Module 6: Automation & Notifications** 🤖
-- Cron jobs for subscription monitoring
-- Email notification system
-- System health monitoring
-- Automated reports
+**API End Point Quick Link:** [Branch Admin Endpoints](#-branch-admin-endpoints) | [Customer Management Endpoints](#-customer-management-endpoints)
+---
 
-### **Module 7: Seed Data & Static Resources** 🌱
-- Database seed data implementation
-- Hardcoded resource allocation
-- Sample data for testing
-- Package templates & defaults
+### **Module 5: Ticket Management** 🎫
 
-### **Module 8: Testing & Documentation** 🧪
-- Unit & integration tests
-- API documentation & Postman collection
-- Performance testing
-- Security audit
+* Ticket creation & assignment (Branch Admin → Super Admin)
+* Ticket status updates by Super Admin
+* Branch Admin ticket tracking system
 
-### **Module 9: Integration & Optimization** 🎯
-- Cross-module integration
-- Performance optimization
-- Bug fixing & code refactoring
-- Deployment preparation
+**API End Point Quick Link:** [Ticket Management Endpoints](#-ticket-management-endpoints)
+---
 
-### **Module 10: Frontend Planning** 🎨
-- React.js architecture planning
-- Dashboard design specifications
-- API integration strategy
-- UI/UX design guidelines
+### **Module 6: Analytics & Reporting** 📊
+
+* Performance tracking & analysis
+* Customer usage monitoring
+* Branch performance comparison
+* Business intelligence tools
+
+**API End Point Quick Link:** [Analytics & Reporting Endpoints](#-analytics--reporting-endpoints)
+---
+
+### **Module 7: Automation & Notifications** 🤖
+
+* Cron jobs for subscription monitoring
+* Email notification system
+* System health monitoring
+* Automated reports
+
+---
+
+### **Module 8: Seed Data & Static Resources** 🌱
+
+* Database seed data implementation
+* Hardcoded resource allocation
+* Sample data for testing
+* Package templates & defaults
+
+---
+
+### **Module 9: Testing & Documentation** 🧪
+
+* Unit & integration tests
+* API documentation & Postman collection
+* Performance testing
+* Security audit
+
+---
+
+### **Module 10: Integration & Optimization** 🎯
+
+* Cross-module integration
+* Performance optimization
+* Bug fixing & code refactoring
+* Deployment preparation
+
+---
+
+### **Module 11: Frontend Planning** 🎨
+
+* React.js architecture planning
+* Dashboard design specifications
+* API integration strategy
+* UI/UX design guidelines
+
+---
+
+# 👥 Team Assignment & Workflow
+
+We are following a structured and collaborative development workflow. Each member is assigned specific modules with clear responsibilities. Some modules depend on others, so we will build them in the correct order to ensure smooth integration.
+
+---
+
+## 🔑 Team Members & Module Ownership
+
+### **Okasha Nadeem (Project Manager – Jira)**
+
+* [Module 1: Foundation Setup ⚙️](#module-1-foundation--setup-)
+* [Module 3: Super Admin Management 👑](#module-3-super-admin-management-)
+* [Module 5: Ticket Management 🎫](#module-5-ticket-management-)
+* [Module 8: Seed Data & Static Resources 🌱](#module-8-seed-data--static-resources-)
+* [Module 9: Testing & Documentation 🧪](#module-9-testing--documentation-)
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+
+### **Noman**
+
+* [Module 2: Authentication & Security 🔐](#module-2-authentication--security-)
+* [Module 6: Analytics & Reporting 📊](#module-6-analytics--reporting-)
+* [Module 7: Automation & Notifications 🤖 (NodeMailer)](#module-7-automation--notifications-)
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+
+### **Umair**
+
+* [Module 4: Branch Admin & Customer Management 👥](#module-4-branch-admin--customer-management-)
+* [Module 9: Testing & Documentation 🧪](#module-9-testing--documentation-)
+* [Module 7: Automation & Notifications 🤖 (Cron Jobs)](#module-7-automation--notifications-)
+* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-)
+
+### **Frontend (Entire Team – if time permits)**
+
+* [Module 11: Frontend Planning 🎨](#module-11-frontend-planning-)
+
+---
+
+## 📅 Development Order & Dependencies
+
+To ensure stability, we will follow a **planned build order**:
+
+1. **Foundation & Setup ⚙️ (Okasha)**
+
+   * Must be done first. Sets up server, database, folder structure, and project configs.
+
+2. **Authentication & Security 🔐 (Noman)**
+
+   * Needed early so other modules (Admin, Customer, Super Admin) can use secure endpoints.
+
+3. **Super Admin Management 👑 (Okasha)**
+
+   * Depends on Auth. Sets the structure for branches, admins, and system-level control.
+
+4. **Branch Admin & Customer Management 👥 (Umair)**
+
+   * Depends on Auth & Super Admin. Manages customers, subscriptions, and documents.
+
+5. **Ticket Management 🎫 (Okasha)**
+
+   * Depends on both Super Admin & Branch Admin modules.
+
+6. **Seed Data & Static Resources 🌱 (Okasha)**
+
+   * Provides test data and package templates to support ongoing development.
+
+7. **Automation & Notifications 🤖**
+
+   * **NodeMailer (Noman)** → Notification system after customer/admin flows exist.
+   * **Cron Jobs (Umair)** → Automates renewals, reminders once subscription flows are stable.
+
+8. **Analytics 📊 (Noman)**
+
+   * Depends on Customer & Super Admin data.
+
+9. **Testing & Documentation 🧪 (Okasha & Umair)**
+
+   * Runs in parallel with development, but integration testing starts after modules 1–6 are ready.
+
+10. **Integration & Optimization 🎯 (All)**
+
+    * Final step to merge, optimize, fix bugs, and prepare for deployment.
+
+11. **Frontend Planning 🎨 (Team, optional)**
+
+    * Only if backend modules are completed on time.
 
 ---
 
@@ -686,6 +759,7 @@ npm run dev
 - Operational efficiency tools
 
 ---
+
 
 ## 🏆 Team
 
