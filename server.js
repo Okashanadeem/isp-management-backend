@@ -12,7 +12,7 @@ import authRoutes from "./routes/authRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 
 // Middlewares
-import AppError from "./utils/appError.js";
+import AppError from "./utils/AppError.js";
 
 // Logger
 import logger from "./utils/logger.js";

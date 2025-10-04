@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
+import AppError from '../utils/AppError.js';
+import ERROR_MESSAGES from '../utils/errors.js';
 
 const { sign } = jwt;
 
-
+// Create JWT access token
 function createAccessToken(user) {
   return sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '15m'
+    expiresIn: process.env.JWT_EXPIRE || '15m',
   });
 }
 
@@ -16,30 +18,33 @@ export async function login(req, res, next) {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-        data: null,
-        timestamp: new Date().toISOString(),
-      });
+    if (!user) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS.message,
+          ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS.statusCode
+        )
+      );
+    }
 
-    if (!user.isActive)
-      return res.status(403).json({
-        success: false,
-        message: 'User inactive',
-        data: null,
-        timestamp: new Date().toISOString(),
-      });
+    if (!user.isActive) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.USER_INACTIVE.message,
+          ERROR_MESSAGES.AUTH.USER_INACTIVE.statusCode
+        )
+      );
+    }
 
     const ok = await user.matchPassword(password);
-    if (!ok)
-      return res.status(401).json({
-        success: false,
-        message: 'Incorrect password',
-        data: null,
-        timestamp: new Date().toISOString(),
-      });
+    if (!ok) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.INCORRECT_PASSWORD.message,
+          ERROR_MESSAGES.AUTH.INCORRECT_PASSWORD.statusCode
+        )
+      );
+    }
 
     user.lastLogin = new Date();
     await user.save();
@@ -61,7 +66,12 @@ export async function login(req, res, next) {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    next(err);
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.message}: ${err.message}`,
+        ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.statusCode
+      )
+    );
   }
 }
 
@@ -75,6 +85,11 @@ export async function logout(req, res, next) {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    next(err);
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.message}: ${err.message}`,
+        ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.statusCode
+      )
+    );
   }
 }
