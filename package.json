@@ -22,8 +22,10 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.0",
     "morgan": "^1.10.1",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "winston": "^3.18.3"
   },
+  "type": "module",
   "devDependencies": {
     "nodemon": "^3.1.10"
   }
