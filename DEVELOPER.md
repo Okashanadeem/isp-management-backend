@@ -1,7 +1,5 @@
 # 🌐 ISP Management Backend System
 
-
-
 <div align="center">
 
 ![Node.js](https://img.shields.io/badge/Node.js-16.x+-339933?style=for-the-badge&logo=node.js&logoColor=white)
@@ -19,11 +17,10 @@
 
 ### 🚀 Quick Navigation
 
-| [📖 Overview](#-project-overview)               | [🎯 Problem](#-problem-statement)                                                                | [🏗️ Architecture](#️-system-architecture)                               | [⚡ Features](#-core-features)    |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | -------------------------------- |
-| [🛠️ Tech Stack](#️-technology-stack)           | [📡 API Docs](#-api-documentation)                                                               | [📂 Structure](#-project-structure)                                      | [🚀 Setup](#-setup-instructions) |
-| [📋 Development Modules](#-development-modules) | [👥 Team Assignment, Workflow, Modules & Branches](#-team-assignment-workflow-modules--branches) | [📅 Development Order & Dependencies](#-development-order--dependencies) |                                  |
-
+| [📖 Overview](#-project-overview) | [🎯 Problem](#-problem-statement) | [🏗️ Architecture](#️-system-architecture) | [⚡ Features](#-core-features) |
+|-----------------------------------|-----------------------------------|-------------------------------------------|-------------------------------|
+| [🛠️ Tech Stack](#️-technology-stack) | [📡 API Docs](#-api-documentation) | [📂 Structure](#-project-structure) | [🚀 Setup](#-setup-instructions) |
+| [📋 Modules](#-development-modules) | [👥 Team](#-team-assignment-workflow-modules--branches) | [📅 Development](#-development-order--dependencies) | [🎓 Learning](#-learning-outcomes--course-integration) |
 
 </div>
 
@@ -45,19 +42,19 @@ To digitally transform traditional ISP operations by providing an automated, sca
 
 ### Current Challenges in Pakistani ISP Industry
 
-**📊 Operational Inefficiencies:**
+#### 📊 Operational Inefficiencies
 - Manual customer subscription tracking leading to revenue loss
 - Inefficient bandwidth allocation causing service quality issues
 - Lack of centralized monitoring across multiple branches
 - Poor communication between headquarters and local offices
 
-**📈 Management Issues:**
+#### 📈 Management Issues
 - Absence of real-time performance tracking
 - Difficulty in identifying profitable vs. unprofitable branches
 - Manual processes prone to human error
 - Limited business intelligence for strategic planning
 
-**👥 Customer Service Problems:**
+#### 👥 Customer Service Problems
 - Delayed response to subscription renewals and service issues
 - Inconsistent service quality across different locations
 - Poor documentation and customer history management
@@ -90,19 +87,19 @@ Our system addresses these challenges by providing automated workflows, real-tim
 
 ### 🔑 Role Capabilities
 
-**Super Admin:**
-- 🏢 Branch Management: Create, monitor, and optimize branch operations
-- 📊 Resource Allocation: Distribute bandwidth quotas based on demand analytics
-- 📈 Strategic Overview: Access company-wide performance metrics and trends
-- 🔧 Issue Resolution: Handle escalated technical and administrative problems
-- 📊 Business Intelligence: Utilize advanced analytics for expansion planning
+#### Super Admin
+- 🏢 **Branch Management:** Create, monitor, and optimize branch operations
+- 📊 **Resource Allocation:** Distribute bandwidth quotas based on demand analytics
+- 📈 **Strategic Overview:** Access company-wide performance metrics and trends
+- 🔧 **Issue Resolution:** Handle escalated technical and administrative problems
+- 📊 **Business Intelligence:** Utilize advanced analytics for expansion planning
 
-**Branch Admin:**
-- 👥 Customer Lifecycle: Manage complete customer journey from onboarding to service
-- 🛠️ Service Delivery: Process subscriptions, renewals, and technical support requests
-- 📊 Local Analytics: Monitor branch-specific performance and customer satisfaction
-- 🌐 Resource Management: Optimize local bandwidth distribution and service quality
-- 📞 Communication Hub: Coordinate between customers and headquarters
+#### Branch Admin
+- 👥 **Customer Lifecycle:** Manage complete customer journey from onboarding to service
+- 🛠️ **Service Delivery:** Process subscriptions, renewals, and technical support requests
+- 📊 **Local Analytics:** Monitor branch-specific performance and customer satisfaction
+- 🌐 **Resource Management:** Optimize local bandwidth distribution and service quality
+- 📞 **Communication Hub:** Coordinate between customers and headquarters
 
 ---
 
@@ -113,7 +110,8 @@ Our system addresses these challenges by providing automated workflows, real-tim
 - **Advanced Password Security** using bcrypt with salt rounds
 - **Role-Based Access Control (RBAC)** preventing unauthorized access
 - **Input Validation & Sanitization** protecting against injection attacks
-- **Session Management** with secure token refresh mechanisms
+- **Session Management** with secure token handling
+- **Centralized Error Handling** with Winston logging system
 
 ### 🌐 Branch Management System
 - **Multi-Branch Architecture** supporting unlimited regional offices
@@ -185,6 +183,7 @@ nodemailer        // Email Service Integration
 node-cron         // Scheduled Task Management
 moment            // Date/Time Manipulation
 lodash            // Utility Functions
+winston           // Advanced Logging System
 ```
 
 ### Development Tools
@@ -327,7 +326,6 @@ isp-management-backend/
 │   ├── email.js                       # Nodemailer configuration
 │   └── cron.js                        # Cron jobs for automation
 │
-│
 ├── seeds/                             # Database seed data
 │   ├── superAdminSeed.js              # Default super admin accounts
 │   ├── branchSeed.js                  # Sample branches with hardcoded data
@@ -337,6 +335,15 @@ isp-management-backend/
 │
 ├── postman-collection/                # API testing collection
 │   └── isp-api.postman_collection.json
+│
+├── logs/                              # Application logs
+│   ├── combined.log                   # All logs (info + error)
+│   └── error.log                      # Error-only logs
+│
+├── utils/                             # Utility functions
+│   ├── logger.js                      # Winston logger configuration
+│   ├── errors.js                      # Centralized error definitions
+│   └── appError.js                    # Custom error classes
 │
 ├── uploads/                           # Customer document storage
 │
@@ -386,7 +393,6 @@ Content-Type: application/json
 |--------|----------|-------------|---------|
 | POST | `/auth/login` | User authentication | Public |
 | POST | `/auth/logout` | User logout | Authenticated |
-| POST | `/auth/refresh` | Token refresh | Authenticated |
 | GET | `/auth/profile` | Get user profile | Authenticated |
 
 #### 👑 Super Admin Endpoints
@@ -420,28 +426,25 @@ Content-Type: application/json
 | POST | `/customers/:id/activate` | Activate service | - |
 
 #### 🎫 Ticket Management Endpoints
-
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| POST | `/admin/tickets` | Create a new ticket and assign to Super Admin | Branch Admin |
-| GET | `/admin/tickets/:id` | View status of a specific ticket (updated by Super Admin) | Branch Admin |
-| GET | `/superadmin/tickets` | View all tickets assigned by different branch admins | Super Admin |
-| GET | `/superadmin/tickets/:id` | View details of a specific ticket | Super Admin |
-| PUT | `/superadmin/tickets/:id/status` | Update status of a ticket (`acknowledged`, `in progress`, `done`) | Super Admin |
-
+| POST | `/admin/tickets` | Create new ticket | Branch Admin |
+| GET | `/admin/tickets/:id` | View ticket status | Branch Admin |
+| GET | `/superadmin/tickets` | View all tickets | Super Admin |
+| GET | `/superadmin/tickets/:id` | View ticket details | Super Admin |
+| PUT | `/superadmin/tickets/:id/status` | Update ticket status | Super Admin |
 
 #### 📊 Analytics & Reporting Endpoints
-
-| Role                | Method | Endpoint                            | Description                         | Parameters                   |
-| ------------------- | ------ | ----------------------------------- | ----------------------------------- | ---------------------------- |
-| **Super Admin**  | GET    | `/superadmin/analytics/customers`   | View analytics of all customers     | `from, to, branch(optional)` |
-| **Super Admin**  | GET    | `/superadmin/analytics/bandwidth`   | Monitor bandwidth across branches   | `from, to, branch(optional)` |
-| **Super Admin**  | GET    | `/superadmin/analytics/performance` | Compare performance across branches | `from, to, metric`           |
-| **Super Admin**  | GET    | `/superadmin/analytics/revenue`     | Track system-wide revenue trends    | `from, to`                   |
-| **Branch Admin** | GET    | `/branch/analytics/customers`       | Analytics of customers in branch    | `from, to`                   |
-| **Branch Admin** | GET    | `/branch/analytics/bandwidth`       | Bandwidth usage of branch           | `from, to`                   |
-| **Branch Admin** | GET    | `/branch/analytics/performance`     | Performance metrics of branch       | `from, to, metric`           |
-| **Branch Admin** | GET    | `/branch/analytics/subscriptions`   | Track subscription renewals/expiry  | `from, to, status(optional)` |
+| Role | Method | Endpoint | Description | Parameters |
+|------|--------|----------|-------------|------------|
+| **Super Admin** | GET | `/superadmin/analytics/customers` | View all customer analytics | `from, to, branch(optional)` |
+| **Super Admin** | GET | `/superadmin/analytics/bandwidth` | Monitor bandwidth usage | `from, to, branch(optional)` |
+| **Super Admin** | GET | `/superadmin/analytics/performance` | Compare branch performance | `from, to, metric` |
+| **Super Admin** | GET | `/superadmin/analytics/revenue` | Track revenue trends | `from, to` |
+| **Branch Admin** | GET | `/branch/analytics/customers` | Branch customer analytics | `from, to` |
+| **Branch Admin** | GET | `/branch/analytics/bandwidth` | Branch bandwidth usage | `from, to` |
+| **Branch Admin** | GET | `/branch/analytics/performance` | Branch performance metrics | `from, to, metric` |
+| **Branch Admin** | GET | `/branch/analytics/subscriptions` | Track subscriptions | `from, to, status(optional)` |
 
 ---
 
@@ -491,7 +494,6 @@ PORT=5000
 MONGO_URI=mongodb://localhost:27017/isp_management
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRE=15m
-JWT_REFRESH_EXPIRE=7d
 
 # Email Configuration
 EMAIL_SERVICE=gmail
@@ -527,111 +529,104 @@ npm run dev
 
 ## 📋 Development Modules
 
-
 ### **Module 1: Foundation Setup** ⚙️
-
-* Project architecture & environment setup
-* Express.js server & MongoDB connection
-* Folder structure & configuration
-* Git workflow & documentation
+- Project architecture & environment setup
+- Express.js server & MongoDB connection
+- Folder structure & configuration
+- Git workflow & documentation
 
 ---
 
 ### **Module 2: Authentication & Security** 🔐
+- JWT authentication system
+- Role-based access control
+- Password hashing & validation
+- Security middleware & rate limiting
 
-* JWT authentication & refresh tokens
-* Role-based access control
-* Password hashing & validation
-* Security middleware & rate limiting
+**API Endpoint Quick Link:** [Authentication Endpoints](#-authentication-endpoints)
 
-**API End Point Quick Link:** [Authentication Endpoints](#-authentication-endpoints)
 ---
 
 ### **Module 3: Super Admin Management** 👑
+- Branch CRUD operations & mapping
+- Bandwidth allocation & tracking
+- Admin assignment system
+- Analytics dashboard
 
-* Branch CRUD operations & mapping
-* Bandwidth allocation & tracking
-* Admin assignment system
-* Analytics dashboard
+**API Endpoint Quick Link:** [Super Admin Endpoints](#-super-admin-endpoints)
 
-**API End Point Quick Link:** [Super Admin Endpoints](#-super-admin-endpoints)
 ---
 
 ### **Module 4: Branch Admin & Customer Management** 👥
+- Customer CRUD operations
+- Subscription management & renewals
+- Document upload & storage
+- Package management & service history
 
-* Customer CRUD operations
-* Subscription management & renewals
-* Document upload & storage
-* Package management & service history
+**API Endpoint Quick Link:** [Branch Admin Endpoints](#-branch-admin-endpoints) | [Customer Management Endpoints](#-customer-management-endpoints)
 
-**API End Point Quick Link:** [Branch Admin Endpoints](#-branch-admin-endpoints) | [Customer Management Endpoints](#-customer-management-endpoints)
 ---
 
 ### **Module 5: Ticket Management** 🎫
+- Ticket creation & assignment (Branch Admin → Super Admin)
+- Ticket status updates by Super Admin
+- Branch Admin ticket tracking system
 
-* Ticket creation & assignment (Branch Admin → Super Admin)
-* Ticket status updates by Super Admin
-* Branch Admin ticket tracking system
+**API Endpoint Quick Link:** [Ticket Management Endpoints](#-ticket-management-endpoints)
 
-**API End Point Quick Link:** [Ticket Management Endpoints](#-ticket-management-endpoints)
 ---
 
 ### **Module 6: Analytics & Reporting** 📊
+- Performance tracking & analysis
+- Customer usage monitoring
+- Branch performance comparison
+- Business intelligence tools
 
-* Performance tracking & analysis
-* Customer usage monitoring
-* Branch performance comparison
-* Business intelligence tools
+**API Endpoint Quick Link:** [Analytics & Reporting Endpoints](#-analytics--reporting-endpoints)
 
-**API End Point Quick Link:** [Analytics & Reporting Endpoints](#-analytics--reporting-endpoints)
 ---
 
 ### **Module 7: Automation & Notifications** 🤖
-
-* Cron jobs for subscription monitoring
-* Email notification system
-* System health monitoring
-* Automated reports
+- Cron jobs for subscription monitoring
+- Email notification system
+- System health monitoring
+- Automated reports
 
 ---
 
 ### **Module 8: Seed Data & Static Resources** 🌱
-
-* Database seed data implementation
-* Hardcoded resource allocation
-* Sample data for testing
-* Package templates & defaults
+- Database seed data implementation
+- Hardcoded resource allocation
+- Sample data for testing
+- Package templates & defaults
 
 ---
 
 ### **Module 9: Testing & Documentation** 🧪
-
-* Unit & integration tests
-* API documentation & Postman collection
-* Performance testing
-* Security audit
+- Unit & integration tests
+- API documentation & Postman collection
+- Performance testing
+- Security audit
 
 ---
 
 ### **Module 10: Integration & Optimization** 🎯
-
-* Cross-module integration
-* Performance optimization
-* Bug fixing & code refactoring
-* Deployment preparation
+- Cross-module integration
+- Performance optimization
+- Bug fixing & code refactoring
+- Deployment preparation
 
 ---
 
 ### **Module 11: Frontend Planning** 🎨
-
-* React.js architecture planning
-* Dashboard design specifications
-* API integration strategy
-* UI/UX design guidelines
+- React.js architecture planning
+- Dashboard design specifications
+- API integration strategy
+- UI/UX design guidelines
 
 ---
 
-# 👥 Team Assignment, Workflow, Modules & Branches
+## 👥 Team Assignment, Workflow, Modules & Branches
 
 We are following a structured and collaborative development workflow. Each member is assigned specific modules with clear responsibilities. Some modules depend on others, so we will build them in the correct order to ensure smooth integration.
 
@@ -639,36 +634,89 @@ We are following a structured and collaborative development workflow. Each membe
 
 ### **Okasha Nadeem (Project Manager – Jira)**
 
-* [Module 1: Foundation Setup ⚙️](#module-1-foundation--setup-) → `main`
-* [Module 3: Super Admin Management 👑](#module-3-super-admin-management-) → `feature/super-admin`
-* [Module 5: Ticket Management 🎫](#module-5-ticket-management-) → `feature/ticket-management`
-* [Module 8: Seed Data & Static Resources 🌱](#module-8-seed-data--static-resources-) → `feature/seed-data`
-* [Module 9: Documentation 📄](#module-9-testing--documentation-) → `main`
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+**Modules:**
+- [Module 1: Foundation Setup ⚙️](#module-1-foundation-setup-) → `main`
+  - Express.js server configuration
+  - MongoDB connection setup
+  - Project structure initialization
+  - Environment configuration
+  
+- [Module 3: Super Admin Management 👑](#module-3-super-admin-management-) → `feature/super-admin`
+  - Branch CRUD operations
+  - Admin assignment system
+  - Bandwidth allocation tracking
+  
+- [Module 5: Ticket Management 🎫](#module-5-ticket-management-) → `feature/ticket-management`
+  - Ticket creation and assignment
+  - Status tracking system
+  
+- [Module 8: Seed Data & Static Resources 🌱](#module-8-seed-data--static-resources-) → `feature/seed-data`
+  - Database seed implementation
+  - Static resource allocation
+  
+- **Advanced Features Implementation:**
+  - Winston Logger Integration (`utils/logger.js`)
+  - Centralized Error Handling (`utils/errors.js`)
+  - Role-Based Middleware (`middlewares/roleMiddleware.js`)
+  - Global Error Management (`utils/appError.js`)
+  
+- [Module 9: Documentation 📄](#module-9-testing--documentation-) → `main`
+  - API documentation
+  - README maintenance
+  
+- [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+  - Module integration
+  - Performance optimization
 
 ---
 
 ### **Noman**
 
-* [Module 2: Authentication & Security 🔐](#module-2-authentication--security-) → `feature/authentication-security`
-* [Module 6: Analytics 📊](#module-6-analytics--reporting-) → `feature/analytics`
-* [Module 7: Notifications (NodeMailer) 📧](#module-7-automation--notifications-) → `feature/notifications-nodemailer`
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+**Modules:**
+- [Module 2: Authentication & Security 🔐](#module-2-authentication--security-) → `feature/authentication-security`
+  - JWT authentication (without refresh tokens)
+  - Password security
+  - Security middleware
+  
+- [Module 6: Analytics 📊](#module-6-analytics--reporting-) → `feature/analytics`
+  - Performance tracking
+  - Business intelligence
+  
+- [Module 7: Notifications (NodeMailer) 📧](#module-7-automation--notifications-) → `feature/notifications-nodemailer`
+  - Email notification system
+  - Template management
+  
+- [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+  - Cross-module integration support
 
 ---
 
 ### **Umair**
 
-* [Module 4: Branch Admin & Customer Management 👥](#module-4-branch-admin--customer-management-) → `feature/branch-admin`
-* [Module 7: Automation (Cron Jobs) ⏲️](#module-7-automation--notifications-) → `feature/automation-cron`
-* [Module 9: Testing 🧪](#module-9-testing--documentation-) → `feature/testing`
-* [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+**Modules:**
+- [Module 4: Branch Admin & Customer Management 👥](#module-4-branch-admin--customer-management-) → `feature/branch-admin`
+  - Customer CRUD operations
+  - Subscription management
+  - Document handling
+  
+- [Module 7: Automation (Cron Jobs) ⏲️](#module-7-automation--notifications-) → `feature/automation-cron`
+  - Subscription monitoring
+  - Automated reminders
+  
+- [Module 9: Testing 🧪](#module-9-testing--documentation-) → `feature/testing`
+  - Unit & integration tests
+  - API testing
+  
+- [Module 10: Integration & Optimization 🎯](#module-10-integration--optimization-) → `feature/integration-optimization`
+  - Bug fixing & optimization
 
 ---
 
 ### **Frontend (Entire Team – if time permits)**
-
-* [Module 11: Frontend Planning 🎨](#module-11-frontend-planning-) → `feature/frontend`
+- [Module 11: Frontend Planning 🎨](#module-11-frontend-planning-) → `feature/frontend`
+  - React.js architecture
+  - Dashboard design
+  - API integration
 
 ---
 
@@ -677,49 +725,40 @@ We are following a structured and collaborative development workflow. Each membe
 To ensure stability, we will follow a **planned build order**:
 
 1. **Foundation & Setup ⚙️ (Okasha)**
-
-   * Must be done first. Sets up server, database, folder structure, and project configs.
+   - Must be done first. Sets up server, database, folder structure, and project configs.
+   - Implements logging system and error handling infrastructure.
 
 2. **Authentication & Security 🔐 (Noman)**
-
-   * Needed early so other modules (Admin, Customer, Super Admin) can use secure endpoints.
+   - Needed early so other modules can use secure endpoints.
+   - JWT implementation without refresh tokens.
 
 3. **Super Admin Management 👑 (Okasha)**
-
-   * Depends on Auth. Sets the structure for branches, admins, and system-level control.
+   - Depends on Auth. Sets the structure for branches, admins, and system-level control.
 
 4. **Branch Admin & Customer Management 👥 (Umair)**
-
-   * Depends on Auth & Super Admin. Manages customers, subscriptions, and documents.
+   - Depends on Auth & Super Admin. Manages customers, subscriptions, and documents.
 
 5. **Ticket Management 🎫 (Okasha)**
-
-   * Depends on both Super Admin & Branch Admin modules.
+   - Depends on both Super Admin & Branch Admin modules.
 
 6. **Seed Data & Static Resources 🌱 (Okasha)**
-
-   * Provides test data and package templates to support ongoing development.
+   - Provides test data and package templates to support ongoing development.
 
 7. **Automation & Notifications 🤖**
-
-   * **NodeMailer (Noman)** → Notification system after customer/admin flows exist.
-   * **Cron Jobs (Umair)** → Automates renewals, reminders once subscription flows are stable.
+   - **NodeMailer (Noman)** → Notification system after customer/admin flows exist.
+   - **Cron Jobs (Umair)** → Automates renewals, reminders once subscription flows are stable.
 
 8. **Analytics 📊 (Noman)**
-
-   * Depends on Customer & Super Admin data.
+   - Depends on Customer & Super Admin data.
 
 9. **Testing & Documentation 🧪 (Okasha & Umair)**
-
-   * Runs in parallel with development, but integration testing starts after modules 1–6 are ready.
+   - Runs in parallel with development, but integration testing starts after modules 1–6 are ready.
 
 10. **Integration & Optimization 🎯 (All)**
-
-    * Final step to merge, optimize, fix bugs, and prepare for deployment.
+    - Final step to merge, optimize, fix bugs, and prepare for deployment.
 
 11. **Frontend Planning 🎨 (Team, optional)**
-
-    * Only if backend modules are completed on time.
+    - Only if backend modules are completed on time.
 
 ---
 
@@ -740,6 +779,8 @@ To ensure stability, we will follow a **planned build order**:
 - ✅ Cron job automation
 - ✅ Email integration
 - ✅ Error handling & validation
+- ✅ Winston logging system
+- ✅ Centralized error management
 
 **Database Design Excellence:**
 - ✅ Schema design & relationships
@@ -752,8 +793,9 @@ To ensure stability, we will follow a **planned build order**:
 
 **Industry-Standard Practices:**
 - Production-ready architecture
-- Comprehensive testing strategies
-- Professional documentation
+- Comprehensive logging & monitoring
+- Professional error handling
+- Comprehensive documentation
 - Security best practices
 - Scalable system design
 
@@ -766,13 +808,32 @@ To ensure stability, we will follow a **planned build order**:
 
 ---
 
-
 ## 🏆 Team
 
 <div align="center">
 
 **Built with ❤️ by Okasha Nadeem, Umair, and Noman**
 
-*Transforming Pakistan's ISP Industry Through Technology*
+</div>
+
+---
+
+## 📝 License
+
+This project is developed as part of the BanoQabil Web Development 3 course curriculum.
+
+---
+
+## 🙏 Acknowledgments
+
+- **BanoQabil Team** for providing the learning platform
+- **Instructors** for guidance and support
+- **Industry Experts** for best practice recommendations
+
+---
+
+<div align="center">
+
+**⭐ Star this repository if you find it helpful!**
 
 </div>
