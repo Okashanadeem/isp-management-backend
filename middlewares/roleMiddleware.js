@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import ERROR_MESSAGES from "../utils/errors.js";
-import AppError from "../utils/appError.js";
+import AppError from "../utils/AppError.js";
 
 export const authorizeRoles = (allowedRoles = []) => {
   return (req, res, next) => {

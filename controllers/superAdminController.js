@@ -1,7 +1,7 @@
 import Branch from "../models/branchModel.js";
 import User from "../models/userModel.js";
 import ERROR_MESSAGES from "../utils/errors.js";
-import AppError from "../utils/appError.js";
+import AppError from "../utils/AppError.js";
 
 // ========================== DASHBOARD ==========================
 export const getDashboard = async (req, res, next) => {
