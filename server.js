@@ -14,6 +14,10 @@ import superAdminRoutes from "./routes/superAdminRoutes.js";
 // Middlewares
 import AppError from "./utils/AppError.js";
 
+// CronJob
+
+import SubscriptionMonitor from "./config/cron.js";
+
 // Logger
 import logger from "./utils/logger.js";
 
