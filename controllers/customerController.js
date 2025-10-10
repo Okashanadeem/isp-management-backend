@@ -1,88 +1,110 @@
-import Customer from '../models/customerModel.js';
+import Customer from '../models/customer.model.js';
+import CustomerSubscription from '../models/subscription.model.js';
 
-export const createCustomer = async (req,res) => {
-try {
-    const {name,cnic,phone,email,hashPassword,address,landmark} = req.body;
+// GET - list customers with filters
+export const listCustomers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', status, branch } = req.query;
 
+    const query = {};
+    if (search) query['personalInfo.name'] = { $regex: search, $options: 'i' };
+    if (status) query['status'] = status; 
+    if (branch) query['branch'] = branch; 
 
-const existingCustomer = await Customer.findone ({'personalinfo.email':email});
-if (existingCustomer){
+    const customers = await Customer.find(query)
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
 
-return res.status(400).json({message : 'customer already exists'});
+    const total = await Customer.countDocuments(query);
 
-}
-
- const newCustomer = new Customer({
-      PersonalInfo: {
-        name,
-        cnic,
-        phone,
-        email,
-        hashPassword,
-        address,
-        landmark,
-
-    },
+    res.json({
+      message: 'Customers fetched successfully',
+      total,
+      currentPage: Number(page),
+      customers,
     });
- const savedCustomer = await newCustomer.save();
- res.status(201).json({message:'customer saved sucessfully' , customer: savedCustomer});
-
-}
-catch(error){
-    res.status(500).json({message:'Server Error', error : error.message});
-
-}
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching customers', error: error.message });
+  }
 };
 
-export const getAllCustomers = async (req,res) => {
-try {
-const Customers = await customer.find();
-res.status(200).json(customers);
-}
-catch (error) {
-    res.status(500).json({message:'Server Error', error: error.message});
-}
+// POST - create new customer
+export const createCustomer = async (req, res) => {
+  try {
+    const newCustomer = new Customer({ personalInfo: req.body });
+    await newCustomer.save();
+
+    // subscription entry 
+    const newSubscription = new CustomerSubscription({
+      customer: newCustomer._id,
+      package: req.body.package || null,
+      startDate: new Date(),
+      endDate: new Date(Date.now()), 
+      status: 'pending'
+    });
+    await newSubscription.save();
+
+    res.status(201).json({ message: 'Customer created successfully', customer: newCustomer });
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating customer', error: error.message });
+  }
 };
 
-export const getCustomerById = async (req,res) => {
-try { 
-    const customers = await Customer.findById(req.params.id);
-    if (!customers) return res.status(404).json ({message:'user not found'});
-res.status(200).json('customer'); 
+// GET /customers/:id - get single customer details
+export const getCustomerById = async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
 
-}
-catch(error) {
-    res.status(500).json({message:'Server Error', error:error.message});
-}
-
+    const subscription = await CustomerSubscription.findOne({ customer: customer._id });
+    res.json({ customer, subscription });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching customer details', error: error.message });
+  }
 };
 
-export const updateCustomer = async (req,res) => {
+// PUT - update customer
+export const updateCustomer = async (req, res) => {
+  try {
+    const updated = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { personalInfo: req.body },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'Customer not found' });
 
-try {
-
-const updatedCustomer = await Customer.findByIdAndUpdate(
-    req.params.id,
-    {'PersonalInfo': req.body },
-    {new:true}
-);
-if (!updatedCustomer) res.status(404).json({message:'User not found'});
-res.status(200).json({message:'User Updated Successfully',customer:updatedCustomer});
-
-}
-catch(error){
-res.status(500).json({message:'Server Error', error:error.message});
-}
+    res.json({ message: 'Customer updated successfully', customer: updated });
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating customer', error: error.message });
+  }
 };
 
-export const deleteCustomer = async (req,res) =>{
+// POST - suspend service
+export const suspendService = async (req, res) => {
+  try {
+    const subscription = await CustomerSubscription.findOne({ customer: req.params.id });
+    if (!subscription) return res.status(404).json({ message: 'Subscription not found' });
 
-    try {
-const deletedCustomer = await Customer.findByIdAndDelete (res.query.params);
- if (!deletedCustomer) return res.status(404).json ({messsage:'user not found'});
-res.status(200).json({message:'user deleted sucessfully'});
-}
-catch(error){
-res.status(500).json({message:'Server Error', error:error.message})
-}
+    subscription.status = 'suspended';
+    await subscription.save();
+
+    res.json({ message: 'Customer service suspended', subscription });
+  } catch (error) {
+    res.status(500).json({ message: 'Error suspending service', error: error.message });
+  }
+};
+
+// POST - activate service
+export const activateService = async (req, res) => {
+  try {
+    const subscription = await CustomerSubscription.findOne({ customer: req.params.id });
+    if (!subscription) return res.status(404).json({ message: 'Subscription not found' });
+
+    subscription.status = 'active';
+    await subscription.save();
+
+    res.json({ message: 'Customer service activated', subscription });
+  } catch (error) {
+    res.status(500).json({ message: 'Error activating service', error: error.message });
+  }
 };

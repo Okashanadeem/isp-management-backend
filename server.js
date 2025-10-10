@@ -10,6 +10,10 @@ import { fileURLToPath } from "url";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
+import adminRoutes from './routes/adminRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+
+
 
 // Middlewares
 import AppError from "./utils/AppError.js";
@@ -77,3 +81,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`🚀 Server running on: http://localhost:${PORT}`);
 });
+
+
