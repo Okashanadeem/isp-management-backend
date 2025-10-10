@@ -6,41 +6,28 @@ import {
   updateCustomer,
   suspendService,
   activateService
-} from '../controllers/customer.controller.js';
-import { validateCustomer } from '../middleware/customerAuth.middleware.js';
+} from '../controllers/customerController.js';
+import { validateCustomer } from '../validators/customerValidator.js';
+import validate from '../middlewares/validateMiddleware.js'; // ✅ IMPORTED middleware wrapper
 
 const router = express.Router();
 
-// GET /customers
+// ✅ GET /customers - list all customers
 router.get('/', listCustomers);
 
-// POST /customers
-router.post('/', createCustomer);
+// ✅ POST /customers - create new customer (Joi schema wrapped in middleware)
+router.post('/', validate(validateCustomer), createCustomer);
 
-// GET /customers
-router.get('/:id', validateCustomer, getCustomerById);
+// ✅ GET /customers/:id - get customer by ID
+router.get('/:id', getCustomerById);
 
-// PUT /customers
-router.put('/:id', validateCustomer, updateCustomer);
+// ✅ PUT /customers/:id - update existing customer (Joi schema wrapped in middleware)
+router.put('/:id', validate(validateCustomer), updateCustomer);
 
-// POST /customers suspend
-router.post('/:id/suspend', validateCustomer, suspendService);
+// ✅ POST /customers/:id/suspend - suspend service
+router.post('/:id/suspend', suspendService);
 
-// POST /customers activate
-router.post('/:id/activate', validateCustomer, activateService);
+// ✅ POST /customers/:id/activate - activate service
+router.post('/:id/activate', activateService);
 
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res
-      .status(400)
-      .json({ error: ' invalid file type.' });
-  }
-  res.json({
-    message: 'file uploaded successfully',
-    filename: req.file.filename,
-  });
-});
-
-app.listen(3000, () => console.log('✅ Server started on port 5000'));
 export default router;
-

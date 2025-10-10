@@ -1,4 +1,5 @@
-import Customer from '../models/customer.model.js';
+import Customer from '../models/customerModel.js';
+ import ERROR_MESSAGES from '../utils/errors.js';   
 
 // GET /admin/dashboard
 export const getDashboard = async (req, res) => {
@@ -8,12 +9,16 @@ export const getDashboard = async (req, res) => {
       message: 'Branch Dashboard Data',
       data: { totalCustomers }
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Error loading dashboard', error: error.message });
+  } 
+  catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message
+    });
   }
 };
 
-// GET /admin/customers?page&limit&status&search
+// GET /admin/customers
 export const listCustomers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
@@ -33,8 +38,12 @@ export const listCustomers = async (req, res) => {
       currentPage: Number(page),
       customers
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching customers', error: error.message });
+  } 
+  catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message
+    });
   }
 };
 
@@ -46,8 +55,12 @@ export const addCustomer = async (req, res) => {
     });
     await newCustomer.save();
     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
-  } catch (error) {
-    res.status(400).json({ message: 'Error adding customer', error: error.message });
+  } 
+  catch (error) {
+    res.status(ERROR_MESSAGES.USER.CREATION_FAILED.status).json({
+      error: ERROR_MESSAGES.USER.CREATION_FAILED,
+      details: error.message
+    });
   }
 };
 
@@ -60,11 +73,18 @@ export const updateCustomer = async (req, res) => {
       { PersonalInfo: req.body },
       { new: true }
     );
-    if (!updated) return res.status(404).json({ message: 'Customer not found' });
+    if (!updated)
+      return res.status(ERROR_MESSAGES.USER.NOT_FOUND.status).json({
+        error: ERROR_MESSAGES.USER.NOT_FOUND
+      });
 
     res.json({ message: 'Customer updated successfully', customer: updated });
-  } catch (error) {
-    res.status(400).json({ message: 'Error updating customer', error: error.message });
+  } 
+  catch (error) {
+    res.status(ERROR_MESSAGES.USER.UPDATE_FAILED.status).json({
+      error: ERROR_MESSAGES.USER.UPDATE_FAILED,
+      details: error.message
+    });
   }
 };
 
@@ -74,7 +94,10 @@ export const uploadDocuments = async (req, res) => {
     const { id } = req.params;
 
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: 'No files uploaded' });
+      return res.status(400).json({
+        error: ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR,
+        details: "No files were uploaded"
+      });
     }
 
     const uploadedDocs = req.files.map(file => ({
@@ -91,13 +114,20 @@ export const uploadDocuments = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedCustomer) return res.status(404).json({ message: 'Customer not found' });
+    if (!updatedCustomer)
+      return res.status(ERROR_MESSAGES.USER.NOT_FOUND.status).json({
+        error: ERROR_MESSAGES.USER.NOT_FOUND
+      });
 
     res.json({
       message: 'Documents uploaded successfully',
       documents: uploadedDocs
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Error uploading documents', error: error.message });
+  } 
+  catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR,
+      details: error.message
+    });
   }
 };

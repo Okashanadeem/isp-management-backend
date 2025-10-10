@@ -5,8 +5,8 @@ import {
   addCustomer,
   updateCustomer,
   uploadDocuments
-} from '../controllers/admin.controller.js';
-import upload from '../middleware/upload.middleware.js';
+} from '../controllers/adminController.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 

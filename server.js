@@ -20,7 +20,7 @@ import AppError from "./utils/AppError.js";
 
 // CronJob
 
-import SubscriptionMonitor from "./config/cron.js";
+// import SubscriptionMonitor from "./config/cron.js";
 
 // Logger
 import logger from "./utils/logger.js";
@@ -58,6 +58,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
+app.use('./api/admin',adminRoutes);
+app.use('./api/customer',customerRoutes);
 
 // Root Route
 app.get("/", (req, res) => {

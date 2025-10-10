@@ -1,5 +1,6 @@
-import Customer from '../models/customer.model.js';
-import CustomerSubscription from '../models/subscription.model.js';
+import Customer from '../models/customerModel.js';
+import CustomerSubscription from '../models/packageModel.js';
+import ERROR_MESSAGES from '../utils/errors.js'; 
 
 // GET - list customers with filters
 export const listCustomers = async (req, res) => {
@@ -24,7 +25,12 @@ export const listCustomers = async (req, res) => {
       customers,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching customers', error: error.message });
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
+      });
   }
 };
 
@@ -46,20 +52,33 @@ export const createCustomer = async (req, res) => {
 
     res.status(201).json({ message: 'Customer created successfully', customer: newCustomer });
   } catch (error) {
-    res.status(400).json({ message: 'Error creating customer', error: error.message });
+    res
+      .status(ERROR_MESSAGES.USER.CREATION_FAILED.status)
+      .json({
+        error: ERROR_MESSAGES.USER.CREATION_FAILED,
+        details: error.message,
+      });
   }
 };
 
-// GET /customers/:id - get single customer details
+// GET /customers/:id -> get customer details
 export const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id);
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if (!customer)
+      return res
+        .status(ERROR_MESSAGES.USER.NOT_FOUND.status)
+        .json({ error: ERROR_MESSAGES.USER.NOT_FOUND });
 
     const subscription = await CustomerSubscription.findOne({ customer: customer._id });
     res.json({ customer, subscription });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching customer details', error: error.message });
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
+      });
   }
 };
 
@@ -71,11 +90,19 @@ export const updateCustomer = async (req, res) => {
       { personalInfo: req.body },
       { new: true }
     );
-    if (!updated) return res.status(404).json({ message: 'Customer not found' });
+    if (!updated)
+      return res
+        .status(ERROR_MESSAGES.USER.NOT_FOUND.status)
+        .json({ error: ERROR_MESSAGES.USER.NOT_FOUND });
 
     res.json({ message: 'Customer updated successfully', customer: updated });
   } catch (error) {
-    res.status(400).json({ message: 'Error updating customer', error: error.message });
+    res
+      .status(ERROR_MESSAGES.USER.UPDATE_FAILED.status)
+      .json({
+        error: ERROR_MESSAGES.USER.UPDATE_FAILED,
+        details: error.message,
+      });
   }
 };
 
@@ -83,14 +110,22 @@ export const updateCustomer = async (req, res) => {
 export const suspendService = async (req, res) => {
   try {
     const subscription = await CustomerSubscription.findOne({ customer: req.params.id });
-    if (!subscription) return res.status(404).json({ message: 'Subscription not found' });
+    if (!subscription)
+      return res
+        .status(ERROR_MESSAGES.USER.NOT_FOUND.status)
+        .json({ error: ERROR_MESSAGES.USER.NOT_FOUND });
 
     subscription.status = 'suspended';
     await subscription.save();
 
     res.json({ message: 'Customer service suspended', subscription });
   } catch (error) {
-    res.status(500).json({ message: 'Error suspending service', error: error.message });
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
+      });
   }
 };
 
@@ -98,13 +133,21 @@ export const suspendService = async (req, res) => {
 export const activateService = async (req, res) => {
   try {
     const subscription = await CustomerSubscription.findOne({ customer: req.params.id });
-    if (!subscription) return res.status(404).json({ message: 'Subscription not found' });
+    if (!subscription)
+      return res
+        .status(ERROR_MESSAGES.USER.NOT_FOUND.status)
+        .json({ error: ERROR_MESSAGES.USER.NOT_FOUND });
 
     subscription.status = 'active';
     await subscription.save();
 
     res.json({ message: 'Customer service activated', subscription });
   } catch (error) {
-    res.status(500).json({ message: 'Error activating service', error: error.message });
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
+      });
   }
 };
