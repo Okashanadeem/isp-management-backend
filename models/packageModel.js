@@ -1,52 +1,39 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const subscriptionSchema = new mongoose.Schema(
+const packageSchema = new mongoose.Schema(
   {
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Customer',
-      required: true,
-    },
-
-    package: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Package',
-      required: true,
-    },
-
-    startDate: {
-      type: Date,
-      required: true,
-      default: Date.now,
-    },
-
-    endDate: {
-      type: Date,
-      required: true,
-    },
-
-    status: {
+    name: {
       type: String,
-      enum: ['active', 'expired', 'pending', 'suspended'],
-      default: 'pending',
+      required: true,
+      trim: true,
     },
-
-    autoRenewal: {
+    speedMbps: {
+      type: Number,
+      required: true,
+    },
+    dataLimitGB: {
+      type: Number,
+      required: true,
+    },
+    durationMonths: {
+      type: Number,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
-
-    renewalHistory: [
-      {
-        renewalDate: { type: Date },
-        previousEndDate: { type: Date },
-        newEndDate: { type: Date },
-        renewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'branchAdmin' },
-      },
-    ],
   },
   { timestamps: true }
 );
 
-const CustomerSubscription = mongoose.model('CustomerSubscription', subscriptionSchema);
-export default CustomerSubscription;
+const Package = mongoose.model("Package", packageSchema);
+export default Package;

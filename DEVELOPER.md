@@ -307,6 +307,7 @@ isp-management-backend/
 │   ├── branchModel.js                 # Branch management schema
 │   ├── customerModel.js               # Customer & subscription schema
 │   └── packageModel.js                # Internet packages schema
+│   └── customerSubscriptionModel.js    # Customer subscription schema
 │
 ├── routes/                            # API route definitions
 │   ├── authRoutes.js                  # /api/auth → authentication

@@ -58,8 +58,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
-app.use('./api/admin',adminRoutes);
-app.use('./api/customer',customerRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/customer", customerRoutes);
 
 // Root Route
 app.get("/", (req, res) => {
