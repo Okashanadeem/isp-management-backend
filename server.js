@@ -10,9 +10,17 @@ import { fileURLToPath } from "url";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
+import adminRoutes from './routes/adminRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+
+
 
 // Middlewares
 import AppError from "./utils/AppError.js";
+
+// CronJob
+
+// import SubscriptionMonitor from "./config/cron.js";
 
 // Logger
 import logger from "./utils/logger.js";
@@ -50,6 +58,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/customer", customerRoutes);
 
 // Root Route
 app.get("/", (req, res) => {
@@ -73,3 +83,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`🚀 Server running on: http://localhost:${PORT}`);
 });
+
+
