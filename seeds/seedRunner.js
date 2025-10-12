@@ -5,6 +5,7 @@ import seedUsers from "./userSeed.js";
 import seedBranches from "./branchSeed.js";
 import seedPackages from "./packageSeed.js";
 import seedCustomers from "./customerSeed.js";
+import seedTickets from "./ticketSeed.js";
 
 dotenv.config();
 
@@ -28,6 +29,9 @@ const runSeeds = async () => {
 
     console.log("\nSeeding Customers...");
     await seedCustomers();
+
+    console.log("\nSeeding Tickets...");
+    await seedTickets();
 
     console.log("\nAll seed data created successfully!");
   } catch (error) {

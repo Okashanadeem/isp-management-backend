@@ -93,3 +93,52 @@ export async function logout(req, res, next) {
     );
   }
 }
+
+// PROFILE
+export async function getProfile(req, res, next) {
+  try {
+    // req.user is set by auth middleware
+    if (!req.user) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.UNAUTHORIZED.message,
+          ERROR_MESSAGES.AUTH.UNAUTHORIZED.statusCode
+        )
+      );
+    }
+
+    const user = await User.findById(req.user.id).select('-password'); // exclude password
+
+    if (!user) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.USER_NOT_FOUND.message,
+          ERROR_MESSAGES.AUTH.USER_NOT_FOUND.statusCode
+        )
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'User profile retrieved successfully',
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.message}: ${err.message}`,
+        ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.statusCode
+      )
+    );
+  }
+}

@@ -5,6 +5,9 @@ import {
   addCustomer,
   updateCustomer,
   uploadDocuments,
+  createTicket,
+  getMyTickets,
+  getTicketById,
 } from "../controllers/adminController.js";
 
 import upload from "../middlewares/uploadMiddleware.js";
@@ -32,6 +35,31 @@ router.post(
   authorizeRoles("admin"),
   upload.array("documents", 5),
   uploadDocuments
+);
+
+
+// Create new ticket
+router.post(
+  "/tickets",
+  protect,
+  authorizeRoles("admin"),
+  createTicket
+);
+
+// Get all tickets for the branch admin's branch
+router.get(
+  "/tickets",
+  protect,
+  authorizeRoles("admin"),
+  getMyTickets
+);
+
+// Get specific ticket by ID (only from their branch)
+router.get(
+  "/tickets/:id",
+  protect,
+  authorizeRoles("admin"),
+  getTicketById
 );
 
 export default router;

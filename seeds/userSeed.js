@@ -7,35 +7,35 @@ const seedUsers = async () => {
     await User.deleteMany({});
     console.log("Existing users cleared.");
 
-    // --- Super Admin ---
-    const superAdminPassword = await bcrypt.hash("SuperSecure123!", 10);
+    // --- Superadmin ---
     const superAdmin = {
       name: "Super Admin",
       email: "superadmin@example.com",
-      password: superAdminPassword,
+      password: "SuperSecure123!",
       role: "superadmin",
       permissions: ["all"],
     };
 
-    await User.create(superAdmin);
+    await User.create(superAdmin); 
     console.log("Superadmin created.");
 
     // --- Normal Admins ---
     const admins = [];
 
     for (let i = 1; i <= 50; i++) {
-      const hashedPassword = await bcrypt.hash(`AdminPass${i}!`, 10);
+      const plain = `AdminPass${i}!`;
+      const hashed = await bcrypt.hash(plain, 10); 
 
       admins.push({
         name: `Admin User ${i}`,
         email: `admin${i}@example.com`,
-        password: hashedPassword,
+        password: hashed,
         role: "admin",
         permissions: ["read", "write", "update"],
       });
     }
 
-    await User.insertMany(admins);
+    await User.insertMany(admins, { ordered: false });
     console.log(`${admins.length} admin users created.`);
 
     console.log("User seeding completed successfully!");

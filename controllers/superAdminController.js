@@ -1,5 +1,7 @@
 import Branch from "../models/branchModel.js";
 import User from "../models/userModel.js";
+import Ticket from "../models/ticketModel.js";
+import Customer from "../models/customerModel.js";
 import ERROR_MESSAGES from "../utils/errors.js";
 import AppError from "../utils/AppError.js";
 
@@ -249,6 +251,201 @@ export const getAnalytics = async (req, res, next) => {
       success: true,
       count: analytics.length,
       data: analytics,
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+
+// ============================================
+// TICKET MANAGEMENT (Super Admin)
+// ============================================
+
+// Get all tickets across all branches
+export const getAllTickets = async (req, res, next) => {
+  try {
+    const { status, priority, category, branch, page = 1, limit = 10 } = req.query;
+
+    const query = {};
+
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (category) query.category = category;
+    if (branch) query.branch = branch;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [tickets, total] = await Promise.all([
+      Ticket.find(query)
+        .populate("createdBy", "name email")
+        .populate("branch", "name location")
+        .populate("customer", "personalInfo.name personalInfo.email personalInfo.phone")
+        .populate("assignedTo", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Ticket.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      data: tickets,
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+
+// Get ticket details by ID
+export const getTicketDetailsById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const ticket = await Ticket.findById(id)
+      .populate("createdBy", "name email")
+      .populate("branch", "name location contactNumber")
+      .populate("customer", "personalInfo.name personalInfo.email personalInfo.phone personalInfo.address")
+      .populate("assignedTo", "name email")
+      .populate("statusHistory.updatedBy", "name email");
+
+    if (!ticket) {
+      throw new AppError("Ticket not found", 404);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: ticket,
+    });
+  } catch (error) {
+    if (error instanceof AppError) return next(error);
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+
+// Update ticket status
+export const updateTicketStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, comment, assignedTo } = req.body;
+
+    const ticket = await Ticket.findById(id);
+
+    if (!ticket) {
+      throw new AppError("Ticket not found", 404);
+    }
+
+    // Update status history
+    ticket.statusHistory.push({
+      status,
+      updatedBy: req.user._id,
+      comment: comment || `Status changed to ${status}`,
+    });
+
+    ticket.status = status;
+
+    if (assignedTo) {
+      // Verify the assigned user exists
+      const assignedUser = await User.findById(assignedTo);
+      if (!assignedUser) {
+        throw new AppError("Assigned user not found", 404);
+      }
+      ticket.assignedTo = assignedTo;
+    }
+
+    // Set resolved/closed dates
+    if (status === "resolved" && !ticket.resolvedAt) {
+      ticket.resolvedAt = new Date();
+    }
+
+    if (status === "closed" && !ticket.closedAt) {
+      ticket.closedAt = new Date();
+    }
+
+    await ticket.save();
+
+    await ticket.populate([
+      { path: "createdBy", select: "name email" },
+      { path: "branch", select: "name location" },
+      { path: "customer", select: "personalInfo.name personalInfo.email personalInfo.phone" },
+      { path: "assignedTo", select: "name email" },
+      { path: "statusHistory.updatedBy", select: "name email" },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "Ticket status updated successfully",
+      data: ticket,
+    });
+  } catch (error) {
+    if (error instanceof AppError) return next(error);
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+
+// Get ticket statistics
+export const getTicketStats = async (req, res, next) => {
+  try {
+    const [statusStats, priorityStats, categoryStats] = await Promise.all([
+      Ticket.aggregate([
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Ticket.aggregate([
+        {
+          $group: {
+            _id: "$priority",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Ticket.aggregate([
+        {
+          $group: {
+            _id: "$category",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        byStatus: statusStats,
+        byPriority: priorityStats,
+        byCategory: categoryStats,
+      },
     });
   } catch (error) {
     next(
