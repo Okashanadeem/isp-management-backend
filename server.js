@@ -13,13 +13,10 @@ import superAdminRoutes from "./routes/superAdminRoutes.js";
 import adminRoutes from './routes/adminRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 
-
-
 // Middlewares
 import AppError from "./utils/AppError.js";
 
 // CronJob
-
 // import SubscriptionMonitor from "./config/cron.js";
 
 // Logger
@@ -55,7 +52,9 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// ============================================
+// API ROUTES
+// ============================================
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
 app.use("/api/admin", adminRoutes);
@@ -66,22 +65,42 @@ app.get("/", (req, res) => {
   res.send("ISP Management Backend Running...");
 });
 
+// Health Check Route
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => logger.info("✅ Connected to MongoDB"))
-  .catch((err) => logger.error(`❌ MongoDB connection failed: ${err.message}`));
+  .then(() => logger.info("Connected to MongoDB"))
+  .catch((err) => logger.error(`MongoDB connection failed: ${err.message}`));
 
-// Error Handling Middleware
+// 404 Handler - Must be after all routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: {
+      code: "ROUTE_NOT_FOUND",
+      message: `Route ${req.method} ${req.originalUrl} not found`
+    }
+  });
+});
+
+// Error Handling Middleware - Must be last
 app.use(AppError);
 
 // Server Initialization
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  logger.info(`🚀 Server running on: http://localhost:${PORT}`);
+  logger.info(`Server running on: http://localhost:${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-
-

@@ -308,6 +308,7 @@ isp-management-backend/
 │   ├── customerModel.js               # Customer & subscription schema
 │   └── packageModel.js                # Internet packages schema
 │   └── customerSubscriptionModel.js    # Customer subscription schema
+│   └── ticketModel.js                  # Ticket management schema
 │
 ├── routes/                            # API route definitions
 │   ├── authRoutes.js                  # /api/auth → authentication
@@ -328,10 +329,11 @@ isp-management-backend/
 │   └── cron.js                        # Cron jobs for automation
 │
 ├── seeds/                             # Database seed data
-│   ├── superAdminSeed.js              # Default super admin accounts
+│   ├── userSeed.js                    # Default user accounts
 │   ├── branchSeed.js                  # Sample branches with hardcoded data
 │   ├── packageSeed.js                 # Internet package templates
 │   ├── customerSeed.js                # Demo customer accounts
+│   ├── ticketSeed.js                   # Sample tickets
 │   └── seedRunner.js                  # Seed execution script
 │
 ├── postman-collection/                # API testing collection
@@ -431,6 +433,7 @@ Content-Type: application/json
 |--------|----------|-------------|---------|
 | POST | `/admin/tickets` | Create new ticket | Branch Admin |
 | GET | `/admin/tickets/:id` | View ticket status | Branch Admin |
+| GET | `/admin/tickets` | List all tickets | Branch Admin |
 | GET | `/superadmin/tickets` | View all tickets | Super Admin |
 | GET | `/superadmin/tickets/:id` | View ticket details | Super Admin |
 | PUT | `/superadmin/tickets/:id/status` | Update ticket status | Super Admin |
