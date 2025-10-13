@@ -7,11 +7,14 @@ const { sign } = jwt;
 
 // Create JWT access token
 function createAccessToken(user) {
-  return sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '15m',
-  });
+  return sign(
+    { id: user._id, role: user.role, branch: user.branch }, // <-- add branch here
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRE || '15m',
+    }
+  );
 }
-
 // LOGIN
 export async function login(req, res, next) {
   try {
@@ -61,6 +64,7 @@ export async function login(req, res, next) {
           name: user.name,
           email: user.email,
           role: user.role,
+          branch: user.branch, // <-- add this line
         },
       },
       timestamp: new Date().toISOString(),
@@ -133,6 +137,41 @@ export async function getProfile(req, res, next) {
       },
       timestamp: new Date().toISOString(),
     });
+  } catch (err) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.message}: ${err.message}`,
+        ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.statusCode
+      )
+    );
+  }
+}
+
+// Middleware to protect routes
+export function protect(req, res, next) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]; // Bearer token
+
+    if (!token) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.AUTH.UNAUTHORIZED.message,
+          ERROR_MESSAGES.AUTH.UNAUTHORIZED.statusCode
+        )
+      );
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Attach user to request
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
+      branch: decoded.branch, // <-- make sure this is set
+    };
+
+    next();
   } catch (err) {
     next(
       new AppError(

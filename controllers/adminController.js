@@ -51,12 +51,12 @@ export const listCustomers = async (req, res) => {
     const query =
       req.user.role === "superadmin"
         ? {
-            "personalInfo.name": { $regex: search, $options: "i" },
-          }
+          "personalInfo.name": { $regex: search, $options: "i" },
+        }
         : {
-            branch: branchId,
-            "personalInfo.name": { $regex: search, $options: "i" },
-          };
+          branch: branchId,
+          "personalInfo.name": { $regex: search, $options: "i" },
+        };
 
     const customers = await Customer.find(query)
       .skip((page - 1) * limit)
@@ -330,7 +330,7 @@ export const getTicketById = async (req, res) => {
 export const getBranchCustomerAnalytics = async (req, res) => {
   try {
     const branchId = req.user.branch;
-    
+
     const result = await Customer.aggregate([
       {
         $match: { branch: branchId }
@@ -372,12 +372,10 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
   try {
     const branchId = req.user.branch;
     const { from, to } = req.query;
-    
+
     // For now, we'll use branch data since bandwidth is stored in Branch model
     const result = await Branch.aggregate([
-      {
-        $match: { _id: branchId }
-      },
+      { $match: { _id: branchId } },
       {
         $project: {
           _id: 1,
@@ -400,7 +398,7 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
         }
       }
     ]);
-console.log("Branch ID:", branchId);
+    console.log("Branch ID:", branchId);
 
     res.json({
       message: "Branch Bandwidth analytics",
@@ -420,14 +418,14 @@ export const getBranchPerformanceAnalytics = async (req, res) => {
   try {
     const branchId = req.user.branch;
     const { from, to, metric } = req.query;
-    
+
     const matchStage = { branch: branchId };
     if (from || to) {
       matchStage.createdAt = {};
       if (from) matchStage.createdAt.$gte = new Date(from);
       if (to) matchStage.createdAt.$lte = new Date(to);
     }
-    
+
     const result = await Customer.aggregate([
       {
         $match: matchStage
@@ -465,14 +463,14 @@ export const getBranchSubscriptionAnalytics = async (req, res) => {
   try {
     const branchId = req.user.branch;
     const { from, to, status } = req.query;
-    
+
     const matchStage = { branch: branchId };
     if (from || to) {
       matchStage.createdAt = {};
       if (from) matchStage.createdAt.$gte = new Date(from);
       if (to) matchStage.createdAt.$lte = new Date(to);
     }
-    
+
     const result = await Customer.aggregate([
       {
         $match: matchStage
