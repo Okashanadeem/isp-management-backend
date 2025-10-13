@@ -1,6 +1,8 @@
 import Customer from "../models/customerModel.js";
 import Ticket from "../models/ticketModel.js";
+import Branch from "../models/branchModel.js"; // <--- added import
 import ERROR_MESSAGES from "../utils/errors.js";
+import mongoose from "mongoose";
 
 
 export const getDashboard = async (req, res) => {
@@ -313,6 +315,189 @@ export const getTicketById = async (req, res) => {
     res.json({
       message: "Ticket fetched successfully",
       ticket,
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
+// ========================== BRANCH ANALYTICS FUNCTIONS ==========================
+
+// Branch customer analytics
+export const getBranchCustomerAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    
+    const result = await Customer.aggregate([
+      {
+        $match: { branch: branchId }
+      },
+      {
+        $group: {
+          _id: null,
+          totalCustomers: { $sum: 1 },
+          customersWithDocuments: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: "$documents" }, 0] }, 1, 0]
+            }
+          },
+          avgDocumentsPerCustomer: {
+            $avg: { $size: "$documents" }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      message: "Branch customer analytics",
+      data: result[0] || {
+        totalCustomers: 0,
+        customersWithDocuments: 0,
+        avgDocumentsPerCustomer: 0
+      }
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
+// Branch bandwidth usage
+export const getBranchBandwidthAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to } = req.query;
+    
+    // For now, we'll use branch data since bandwidth is stored in Branch model
+    const result = await Branch.aggregate([
+      {
+        $match: { _id: branchId }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          city: "$location.city",
+          bandwidthAllocated: "$bandwidth.allocated",
+          bandwidthUsed: "$bandwidth.used",
+          bandwidthRemaining: "$bandwidth.remaining",
+          usagePercentage: {
+            $round: [
+              {
+                $multiply: [
+                  { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                  100
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    ]);
+console.log("Branch ID:", branchId);
+
+    res.json({
+      message: "Branch Bandwidth analytics",
+      data: result
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+
+    });
+  }
+};
+
+// Branch performance metrics
+export const getBranchPerformanceAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to, metric } = req.query;
+    
+    const matchStage = { branch: branchId };
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+    
+    const result = await Customer.aggregate([
+      {
+        $match: matchStage
+      },
+      {
+        $group: {
+          _id: null,
+          totalCustomers: { $sum: 1 },
+          customersWithDocuments: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: "$documents" }, 0] }, 1, 0]
+            }
+          },
+          avgDocumentsPerCustomer: {
+            $avg: { $size: "$documents" }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      message: "Branch registration trends",
+      data: result
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
+// Track subscriptions
+export const getBranchSubscriptionAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to, status } = req.query;
+    
+    const matchStage = { branch: branchId };
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+    
+    const result = await Customer.aggregate([
+      {
+        $match: matchStage
+      },
+      {
+        $group: {
+          _id: null,
+          totalSubscriptions: { $sum: 1 },
+          activeSubscriptions: {
+            $sum: {
+              $cond: [{ $ne: ["$subscription.status", "expired"] }, 1, 0]
+            }
+          },
+          expiredSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$subscription.status", "expired"] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      message: "Top customers by documents",
+      data: result
     });
   } catch (error) {
     res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({

@@ -8,6 +8,10 @@ import {
   createTicket,
   getMyTickets,
   getTicketById,
+  getBranchCustomerAnalytics,
+  getBranchBandwidthAnalytics,
+  getBranchPerformanceAnalytics,
+  getBranchSubscriptionAnalytics,
 } from "../controllers/adminController.js";
 
 import upload from "../middlewares/uploadMiddleware.js";
@@ -60,6 +64,35 @@ router.get(
   protect,
   authorizeRoles("admin"),
   getTicketById
+);
+
+// Analytics routes
+router.get(
+  "/analytics/customers",
+  protect,
+  authorizeRoles("admin"),
+  getBranchCustomerAnalytics
+);
+
+router.get(
+  "/analytics/bandwidth",
+  protect,
+  authorizeRoles("admin"),
+  getBranchBandwidthAnalytics
+);
+
+router.get(
+  "/analytics/performance",
+  protect,
+  authorizeRoles("admin"),
+  getBranchPerformanceAnalytics
+);
+
+router.get(
+  "/analytics/subscriptions",
+  protect,
+  authorizeRoles("admin"),
+  getBranchSubscriptionAnalytics
 );
 
 export default router;
