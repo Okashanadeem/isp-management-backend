@@ -7,22 +7,21 @@ import {
   uploadDocuments
 } from '../controllers/adminController.js';
 import upload from '../middlewares/uploadMiddleware.js';
+import { getExpiringSubscriptions, getExpiredSubscriptions } from '../controllers/adminController.js';
 
 const router = express.Router();
-
-// Branch dashboard
 router.get('/dashboard', getDashboard);
 
-// List customers (with pagination & search)
 router.get('/customers', listCustomers);
 
-// Add new customer
 router.post('/customers', addCustomer);
 
-// Update customer by ID
 router.put('/customers/:id', updateCustomer);
 
-// Upload documents for a specific customer
 router.post('/customers/:id/documents', upload.array('documents', 5), uploadDocuments);
+
+router.get('/subscriptions/expiring', getExpiringSubscriptions);
+
+router.get('/subscriptions/expired', getExpiredSubscriptions);
 
 export default router;

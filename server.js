@@ -13,7 +13,9 @@ import superAdminRoutes from "./routes/superAdminRoutes.js";
 import adminRoutes from './routes/adminRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 
-
+// cron jobs
+import { startCronJobs } from './config/cron.js';
+startCronJobs();
 
 // Middlewares
 import AppError from "./utils/AppError.js";
@@ -58,8 +60,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/superadmin", superAdminRoutes);
-app.use('./api/admin',adminRoutes);
-app.use('./api/customer',customerRoutes);
+app.use('/api/admin',adminRoutes);
+app.use('/api/customer',customerRoutes);
 
 // Root Route
 app.get("/", (req, res) => {

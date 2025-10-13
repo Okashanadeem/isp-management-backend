@@ -1,5 +1,7 @@
 import Customer from '../models/customerModel.js';
- import ERROR_MESSAGES from '../utils/errors.js';   
+import ERROR_MESSAGES from '../utils/errors.js';  
+import moment from 'moment';
+import CustomerSubscription from '../models/packageModel.js'; 
 
 // GET /admin/dashboard
 export const getDashboard = async (req, res) => {
@@ -131,3 +133,51 @@ export const uploadDocuments = async (req, res) => {
     });
   }
 };
+
+
+//  1) Expiring within 2 days
+export const getExpiringSubscriptions = async (req, res) => {
+  try {
+    const now = moment().startOf('day');
+    const twoDaysFromNow = moment().add(2, 'days').endOf('day');
+
+    const expiringSoon = await CustomerSubscription.find({
+      endDate: { $gte: now.toDate(), $lte: twoDaysFromNow.toDate() },
+      status: 'active',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expiringSoon.length,
+      expiringSoon,
+    });
+  } catch (error) {
+    console.error('Error fetching expiring subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// 2) expired today
+export const getExpiredSubscriptions = async (req, res) => {
+  try {
+    const today = moment().startOf('day');
+
+    const expired = await CustomerSubscription.find({
+      endDate: { $lt: today.toDate() },
+      status: 'expired',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expired.length,
+      expired,
+    });
+  } catch (error) {
+    console.error('Error fetching expired subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+
+
