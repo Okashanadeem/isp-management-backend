@@ -321,3 +321,46 @@ export const getTicketById = async (req, res) => {
     });
   }
 };
+
+// Expiring within 2 days
+export const getExpiringSubscriptions = async (req, res) => {
+  try {
+    const now = moment().startOf('day');
+    const twoDaysFromNow = moment().add(2, 'days').endOf('day');
+
+    const expiringSoon = await CustomerSubscription.find({
+      endDate: { $gte: now.toDate(), $lte: twoDaysFromNow.toDate() },
+      status: 'active',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expiringSoon.length,
+      expiringSoon,
+    });
+  } catch (error) {
+    console.error('Error fetching expiring subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// expire today
+export const getExpiredSubscriptions = async (req, res) => {
+  try {
+    const today = moment().startOf('day');
+
+    const expired = await CustomerSubscription.find({
+      endDate: { $lt: today.toDate() },
+      status: 'expired',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expired.length,
+      expired,
+    });
+  } catch (error) {
+    console.error('Error fetching expired subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};

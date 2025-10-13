@@ -2,7 +2,7 @@ import Customer from '../models/customerModel.js';
 import CustomerSubscription from '../models/packageModel.js';
 import ERROR_MESSAGES from '../utils/errors.js'; 
 
-// GET - list customers with filters
+// GET - list customers 
 export const listCustomers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '', status, branch } = req.query;
@@ -61,7 +61,7 @@ export const createCustomer = async (req, res) => {
   }
 };
 
-// GET /customers/:id -> get customer details
+// GET /customers/:id - get customer details
 export const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id);

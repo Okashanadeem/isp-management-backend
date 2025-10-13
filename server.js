@@ -16,8 +16,9 @@ import customerRoutes from './routes/customerRoutes.js';
 // Middlewares
 import AppError from "./utils/AppError.js";
 
-// CronJob
-// import SubscriptionMonitor from "./config/cron.js";
+// Cron Job
+import { startCronJobs } from './config/cron.js';
+startCronJobs();
 
 // Logger
 import logger from "./utils/logger.js";

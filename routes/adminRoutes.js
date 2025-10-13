@@ -13,19 +13,16 @@ import {
 import upload from "../middlewares/uploadMiddleware.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
+import { getExpiringSubscriptions, getExpiredSubscriptions } from '../controllers/adminController.js';
 
 const router = express.Router();
 
-// Branch dashboard (only accessible by admins)
 router.get("/dashboard", protect, authorizeRoles("admin"), getDashboard);
 
-// List customers (with pagination & search)
 router.get("/customers", protect, authorizeRoles("admin"), listCustomers);
 
-// Add new customer
 router.post("/customers", protect, authorizeRoles("admin"), addCustomer);
 
-// Update customer by ID
 router.put("/customers/:id", protect, authorizeRoles("admin"), updateCustomer);
 
 // Upload documents for a specific customer
@@ -63,3 +60,7 @@ router.get(
 );
 
 export default router;
+
+router.get('/subscriptions/expiring', getExpiringSubscriptions);
+
+router.get('/subscriptions/expired', getExpiredSubscriptions);
