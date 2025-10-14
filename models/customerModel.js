@@ -11,6 +11,12 @@ const customerSchema = new mongoose.Schema({
     landmark: { type: String, required: true, trim: true },
   },
 
+  branch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Branch",
+    required: true,
+  },
+
   documents: [
     {
       filename: { type: String, required: true },

@@ -1,6 +1,7 @@
 import Customer from "../models/customerModel.js";
 import Ticket from "../models/ticketModel.js";
-import Branch from "../models/branchModel.js"; // <--- added import
+import Branch from "../models/branchModel.js";
+import CustomerSubscription from "../models/customerSubscriptionModel.js";
 import ERROR_MESSAGES from "../utils/errors.js";
 import mongoose from "mongoose";
 
@@ -331,9 +332,14 @@ export const getBranchCustomerAnalytics = async (req, res) => {
   try {
     const branchId = req.user.branch;
 
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
     const result = await Customer.aggregate([
       {
-        $match: { branch: branchId }
+        $match: { branch: branchObjectId }
       },
       {
         $group: {
@@ -341,11 +347,11 @@ export const getBranchCustomerAnalytics = async (req, res) => {
           totalCustomers: { $sum: 1 },
           customersWithDocuments: {
             $sum: {
-              $cond: [{ $gt: [{ $size: "$documents" }, 0] }, 1, 0]
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$documents", []] } }, 0] }, 1, 0]
             }
           },
           avgDocumentsPerCustomer: {
-            $avg: { $size: "$documents" }
+            $avg: { $size: { $ifNull: ["$documents", []] } }
           }
         }
       }
@@ -373,7 +379,7 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
     const branchId = req.user.branch;
     const { from, to } = req.query;
 
-    // For now, we'll use branch data since bandwidth is stored in Branch model
+   
     // Validate branchId before converting to ObjectId
     if (!branchId || !mongoose.isValidObjectId(branchId)) {
       // no branch available on the user or invalid id -> return default object
@@ -455,7 +461,12 @@ export const getBranchPerformanceAnalytics = async (req, res) => {
     const branchId = req.user.branch;
     const { from, to, metric } = req.query;
 
-    const matchStage = { branch: branchId };
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
+    const matchStage = { branch: branchObjectId };
     if (from || to) {
       matchStage.createdAt = {};
       if (from) matchStage.createdAt.$gte = new Date(from);
@@ -468,17 +479,19 @@ export const getBranchPerformanceAnalytics = async (req, res) => {
       },
       {
         $group: {
-          _id: null,
+          _id: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" }
+          },
           totalCustomers: { $sum: 1 },
           customersWithDocuments: {
             $sum: {
-              $cond: [{ $gt: [{ $size: "$documents" }, 0] }, 1, 0]
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$documents", []] } }, 0] }, 1, 0]
             }
-          },
-          avgDocumentsPerCustomer: {
-            $avg: { $size: "$documents" }
           }
         }
+      },
+      {
+        $sort: { _id: 1 }
       }
     ]);
 
@@ -500,14 +513,30 @@ export const getBranchSubscriptionAnalytics = async (req, res) => {
     const branchId = req.user.branch;
     const { from, to, status } = req.query;
 
-    const matchStage = { branch: branchId };
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
+    // First, get all customers for this branch
+    const customers = await Customer.find({ branch: branchObjectId }).select('_id');
+    const customerIds = customers.map(c => c._id);
+
+    const matchStage = { 
+      customer: { $in: customerIds }
+    };
+    
+    if (status) {
+      matchStage.status = status;
+    }
+    
     if (from || to) {
       matchStage.createdAt = {};
       if (from) matchStage.createdAt.$gte = new Date(from);
       if (to) matchStage.createdAt.$lte = new Date(to);
     }
 
-    const result = await Customer.aggregate([
+    const result = await CustomerSubscription.aggregate([
       {
         $match: matchStage
       },
@@ -517,12 +546,22 @@ export const getBranchSubscriptionAnalytics = async (req, res) => {
           totalSubscriptions: { $sum: 1 },
           activeSubscriptions: {
             $sum: {
-              $cond: [{ $ne: ["$subscription.status", "expired"] }, 1, 0]
+              $cond: [{ $eq: ["$status", "active"] }, 1, 0]
             }
           },
           expiredSubscriptions: {
             $sum: {
-              $cond: [{ $eq: ["$subscription.status", "expired"] }, 1, 0]
+              $cond: [{ $eq: ["$status", "expired"] }, 1, 0]
+            }
+          },
+          pendingSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "pending"] }, 1, 0]
+            }
+          },
+          suspendedSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "suspended"] }, 1, 0]
             }
           }
         }
@@ -530,8 +569,14 @@ export const getBranchSubscriptionAnalytics = async (req, res) => {
     ]);
 
     res.json({
-      message: "Top customers by documents",
-      data: result
+      message: "Subscription analytics",
+      data: result[0] || {
+        totalSubscriptions: 0,
+        activeSubscriptions: 0,
+        expiredSubscriptions: 0,
+        pendingSubscriptions: 0,
+        suspendedSubscriptions: 0
+      }
     });
   } catch (error) {
     res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
@@ -540,3 +585,4 @@ export const getBranchSubscriptionAnalytics = async (req, res) => {
     });
   }
 };
+
