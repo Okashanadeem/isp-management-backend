@@ -374,8 +374,26 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
     const { from, to } = req.query;
 
     // For now, we'll use branch data since bandwidth is stored in Branch model
+    // Validate branchId before converting to ObjectId
+    if (!branchId || !mongoose.isValidObjectId(branchId)) {
+      // no branch available on the user or invalid id -> return default object
+      return res.json({
+        message: "Branch Bandwidth analytics",
+        data: {
+          _id: branchId || null,
+          name: null,
+          city: null,
+          bandwidthAllocated: 0,
+          bandwidthUsed: 0,
+          bandwidthRemaining: 0,
+          usagePercentage: 0,
+        },
+      });
+    }
+
     const result = await Branch.aggregate([
-      { $match: { _id: branchId } },
+      // Ensure we match by ObjectId; branchId may be a string
+      { $match: { _id: new mongoose.Types.ObjectId(branchId) } },
       {
         $project: {
           _id: 1,
@@ -385,10 +403,17 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
           bandwidthUsed: "$bandwidth.used",
           bandwidthRemaining: "$bandwidth.remaining",
           usagePercentage: {
+            // guard against divide-by-zero if allocated is 0
             $round: [
               {
                 $multiply: [
-                  { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                  {
+                    $cond: [
+                      { $gt: ["$bandwidth.allocated", 0] },
+                      { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                      0
+                    ]
+                  },
                   100
                 ]
               },
@@ -400,9 +425,20 @@ export const getBranchBandwidthAnalytics = async (req, res) => {
     ]);
     console.log("Branch ID:", branchId);
 
+    // Aggregate returns an array; return the single object or defaults
+    const data = (result && result.length > 0) ? result[0] : {
+      _id: branchId,
+      name: null,
+      city: null,
+      bandwidthAllocated: 0,
+      bandwidthUsed: 0,
+      bandwidthRemaining: 0,
+      usagePercentage: 0
+    };
+
     res.json({
       message: "Branch Bandwidth analytics",
-      data: result
+      data
     });
   } catch (error) {
     res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
