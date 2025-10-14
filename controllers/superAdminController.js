@@ -236,7 +236,10 @@ export const getAnalytics = async (req, res, next) => {
             $round: [
               {
                 $multiply: [
-                  { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                  {
+                    $divide: ["$bandwidth.used",
+                      "$bandwidth.allocated"]
+                  },
                   100,
                 ],
               },
@@ -446,6 +449,246 @@ export const getTicketStats = async (req, res, next) => {
         byPriority: priorityStats,
         byCategory: categoryStats,
       },
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+// ========================== ANALYTICS FUNCTIONS ==========================
+
+// View all customer analytics
+export const getCustomerAnalytics = async (req, res, next) => {
+  try {
+    const { from, to } = req.query;
+
+    const matchStage = {};
+
+  
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+
+    const pipeline = [];
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push(
+      {
+        $group: {
+          _id: "$personalInfo.landmark",
+          totalCustomers: { $sum: 1 },
+          names: { $addToSet: "$personalInfo.name" },
+          emails: { $addToSet: "$personalInfo.email" },
+        },
+      },
+      {
+        $sort: { totalCustomers: -1 },
+      }
+    );
+
+    const result = await Customer.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+
+// Monitor bandwidth usage
+export const getBandwidthAnalytics = async (req, res, next) => {
+  try {
+    const { from, to, branch } = req.query;
+
+    const matchStage = {};
+    if (branch) {
+      matchStage._id = branch;
+    }
+
+    const pipeline = [];
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push(
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          city: "$location.city",
+          totalCustomers: "$customerCount",
+          bandwidthUsed: "$bandwidth.used",
+          bandwidthAllocated: "$bandwidth.allocated",
+          bandwidthRemaining: "$bandwidth.remaining",
+          usagePercentage: {
+            $round: [
+              {
+                $multiply: [
+                  { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                  100
+                ]
+              },
+              2
+            ]
+          }
+        }
+      },
+      {
+        $sort: { usagePercentage: -1 }
+      }
+    );
+
+    const result = await Branch.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+// Compare branch performance
+export const getPerformanceAnalytics = async (req, res, next) => {
+  try {
+    const { from, to, metric } = req.query;
+
+    const matchStage = {};
+    if (from || to) {
+      matchStage.updatedAt = {};
+      if (from) matchStage.updatedAt.$gte = new Date(from);
+      if (to) matchStage.updatedAt.$lte = new Date(to);
+    }
+
+    const pipeline = [];
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push(
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          city: "$location.city",
+          customerCount: 1,
+          bandwidthAllocated: "$bandwidth.allocated",
+          bandwidthUsed: "$bandwidth.used",
+          bandwidthRemaining: "$bandwidth.remaining",
+          efficiency: {
+            $round: [
+              {
+                $multiply: [
+                  { $divide: ["$customerCount", "$bandwidth.allocated"] },
+                  100
+                ]
+              },
+              2
+            ]
+          },
+          utilization: {
+            $round: [
+              {
+                $multiply: [
+                  { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                  100
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    );
+
+    // Sort by metric if specified
+    if (metric === 'efficiency') {
+      pipeline.push({ $sort: { efficiency: -1 } });
+    } else if (metric === 'utilization') {
+      pipeline.push({ $sort: { utilization: -1 } });
+    } else {
+      pipeline.push({ $sort: { customerCount: -1 } });
+    }
+
+    const result = await Branch.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(
+      new AppError(
+        `${ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.message}: ${error.message}`,
+        ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.statusCode
+      )
+    );
+  }
+};
+
+// Track revenue trends
+export const getRevenueAnalytics = async (req, res, next) => {
+  try {
+    const { from, to } = req.query;
+
+    const matchStage = {};
+
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+
+    const pipeline = [];
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push(
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }
+          },
+          totalRegistrations: { $sum: 1 },
+          estimatedRevenue: { $sum: 2000 } 
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 }
+      }
+    );
+
+    const result = await Customer.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      data: result
     });
   } catch (error) {
     next(

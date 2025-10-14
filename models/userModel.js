@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true, index: true },
   password: { type: String, required: true },
+  branch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Branch",
+    default: null,
+  },
   role: { type: String, enum: ['superadmin', 'admin'], default: 'admin' },
   permissions: [{ type: String }],
   isActive: { type: Boolean, default: true },
