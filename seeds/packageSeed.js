@@ -50,7 +50,7 @@ const seedPackages = async () => {
       return;
     }
 
-    // Create random subscriptions for a subset of customers
+    // Create subscriptions for testing cron job
     const subscriptions = [];
 
     for (let i = 0; i < 100; i++) {
@@ -59,29 +59,43 @@ const seedPackages = async () => {
       const randomPackage =
         createdPackages[Math.floor(Math.random() * createdPackages.length)];
 
-      const startDate = new Date();
-      const endDate = new Date(
-        startDate.getTime() +
-          randomPackage.durationMonths * 30 * 24 * 60 * 60 * 1000
-      );
+      const now = new Date();
+
+      // Create a mix of subscription states
+      let startDate, endDate, status;
+
+      const rand = Math.random();
+
+      if (rand < 0.3) {
+        // 🔴 Expired yesterday
+        startDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000);
+        endDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        status = "active"; // cron will mark as expired
+      } else if (rand < 0.6) {
+        // 🟠 Expiring in next 2 days
+        startDate = new Date(now.getTime() - 25 * 24 * 60 * 60 * 1000);
+        endDate = new Date(now.getTime() + Math.floor(Math.random() * 2 + 1) * 24 * 60 * 60 * 1000);
+        status = "active";
+      } else {
+        // 🟢 Active long term (won’t expire soon)
+        startDate = now;
+        endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        status = faker.helpers.arrayElement(["active", "pending"]);
+      }
 
       subscriptions.push({
         customer: randomCustomer._id,
         package: randomPackage._id,
         startDate,
         endDate,
-        status: faker.helpers.arrayElement([
-          "active",
-          "expired",
-          "pending",
-          "suspended",
-        ]),
+        status,
         autoRenewal: faker.datatype.boolean(),
       });
     }
 
     await CustomerSubscription.insertMany(subscriptions);
     console.log(`${subscriptions.length} subscriptions created successfully!`);
+    console.log("Some will expire soon and some are already expired — ready for cron testing.");
   } catch (error) {
     console.error("Error seeding packages:", error);
   } finally {

@@ -1,69 +1,49 @@
 {
   "info": {
     "name": "ISP Management System API",
-    "description": "Complete API collection for ISP Management System with JWT authentication, organized by user roles and features. Includes automated token management and response validation.",
+    "description": "Complete API collection for ISP Management System with Auth, Admin, Customer, and Super Admin routes",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
-    ]
   },
   "variable": [
     {
-      "key": "baseUrl",
+      "key": "base_url",
       "value": "http://localhost:5000/api",
       "type": "string"
     },
     {
-      "key": "token",
+      "key": "auth_token",
       "value": "",
       "type": "string"
     },
     {
-      "key": "userId",
+      "key": "admin_token",
       "value": "",
       "type": "string"
     },
     {
-      "key": "branchId",
+      "key": "superadmin_token",
       "value": "",
       "type": "string"
     },
     {
-      "key": "customerId",
+      "key": "customer_id",
       "value": "",
       "type": "string"
     },
     {
-      "key": "packageId",
+      "key": "branch_id",
       "value": "",
       "type": "string"
     },
     {
-      "key": "subscriptionId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "ticketId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "adminId",
+      "key": "ticket_id",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "🔐 Authentication",
+      "name": "Authentication",
       "item": [
         {
           "name": "Login - Super Admin",
@@ -73,29 +53,15 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('token', jsonData.token);",
-                  "    pm.collectionVariables.set('userId', jsonData.user._id);",
-                  "    pm.environment.set('token', jsonData.token);",
-                  "    pm.test('Token saved successfully', true);",
-                  "    console.log('Super Admin logged in, token saved');",
-                  "}",
-                  "",
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has token', function () {",
-                  "    pm.expect(pm.response.json()).to.have.property('token');",
-                  "});"
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('superadmin_token', jsonData.token);",
+                  "    pm.collectionVariables.set('auth_token', jsonData.token);",
+                  "}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
             "method": "POST",
             "header": [
               {
@@ -108,38 +74,29 @@
               "raw": "{\n  \"email\": \"superadmin@example.com\",\n  \"password\": \"SuperSecure123!\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             }
           }
         },
         {
-          "name": "Login - Branch Admin",
+          "name": "Login - Admin",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('token', jsonData.token);",
-                  "    pm.collectionVariables.set('userId', jsonData.user._id);",
-                  "    pm.environment.set('token', jsonData.token);",
-                  "    console.log('Branch Admin logged in');",
-                  "}",
-                  "",
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('admin_token', jsonData.token);",
+                  "    pm.collectionVariables.set('auth_token', jsonData.token);",
+                  "}"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
             "method": "POST",
             "header": [
               {
@@ -152,145 +109,104 @@
               "raw": "{\n  \"email\": \"admin1@example.com\",\n  \"password\": \"AdminPass1!\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             }
           }
         },
         {
-          "name": "Get Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has user data', function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('name');",
-                  "    pm.expect(jsonData).to.have.property('email');",
-                  "    pm.expect(jsonData).to.have.property('role');",
-                  "});"
-                ]
-              }
-            }
-          ],
+          "name": "Logout",
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "profile"]
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
             }
           }
         },
         {
-          "name": "Logout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Optional: Clear token on logout",
-                  "// pm.collectionVariables.set('token', '');"
-                ]
-              }
-            }
-          ],
+          "name": "Get Profile",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
             }
           }
         }
       ]
     },
     {
-      "name": "👑 Super Admin",
+      "name": "Admin Routes",
       "item": [
         {
-          "name": "📊 Dashboard",
+          "name": "Dashboard",
           "item": [
             {
-              "name": "Get Dashboard Analytics",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "pm.test('Status code is 200', function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});"
-                    ]
+              "name": "Get Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
                   }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [],
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/dashboard",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "dashboard"]
-                }
-              }
-            },
-            {
-              "name": "Get System Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/analytics?period=monthly&branch={{branchId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "analytics"],
-                  "query": [
-                    {
-                      "key": "period",
-                      "value": "monthly"
-                    },
-                    {
-                      "key": "branch",
-                      "value": "{{branchId}}"
-                    }
-                  ]
+                  "raw": "{{base_url}}/admin/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "dashboard"]
                 }
               }
             }
           ]
         },
         {
-          "name": "🏢 Branch Management",
+          "name": "Customers",
           "item": [
             {
-              "name": "List All Branches",
+              "name": "List Customers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/customers",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "customers"]
+                }
+              }
+            },
+            {
+              "name": "Get Customer By ID",
               "event": [
                 {
                   "listen": "test",
                   "script": {
                     "exec": [
-                      "pm.test('Status code is 200', function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
                       "if (pm.response.code === 200) {",
-                      "    const jsonData = pm.response.json();",
-                      "    if (jsonData.branches && jsonData.branches.length > 0) {",
-                      "        pm.collectionVariables.set('branchId', jsonData.branches[0]._id);",
-                      "        console.log('First branch ID saved:', jsonData.branches[0]._id);",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData._id) {",
+                      "        pm.collectionVariables.set('customer_id', jsonData._id);",
                       "    }",
                       "}"
                     ]
@@ -299,45 +215,37 @@
               ],
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/branches?page=1&limit=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "branches"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "key": "limit",
-                      "value": "20"
-                    },
-                    {
-                      "key": "city",
-                      "value": "Karachi",
-                      "disabled": true
-                    }
-                  ]
+                  "raw": "{{base_url}}/admin/customers/{{customer_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "customers", "{{customer_id}}"]
                 }
               }
-            },
+            }
+          ]
+        },
+        {
+          "name": "Tickets",
+          "item": [
             {
-              "name": "Create New Branch",
+              "name": "Create Ticket",
               "event": [
                 {
                   "listen": "test",
                   "script": {
                     "exec": [
                       "if (pm.response.code === 201) {",
-                      "    const jsonData = pm.response.json();",
-                      "    pm.collectionVariables.set('branchId', jsonData._id);",
-                      "    console.log('New branch created with ID:', jsonData._id);",
-                      "}",
-                      "",
-                      "pm.test('Status code is 201', function () {",
-                      "    pm.response.to.have.status(201);",
-                      "});"
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData._id) {",
+                      "        pm.collectionVariables.set('ticket_id', jsonData._id);",
+                      "    }",
+                      "}"
                     ]
                   }
                 }
@@ -346,17 +254,522 @@
                 "method": "POST",
                 "header": [
                   {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
                     "key": "Content-Type",
                     "value": "application/json"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"New Branch - Main Street\",\n  \"location\": {\n    \"address\": \"123 Main Street, Block A\",\n    \"city\": \"Karachi\",\n    \"coordinates\": [67.0011, 24.8607],\n    \"geolocation\": {\n      \"type\": \"Point\",\n      \"coordinates\": [67.0011, 24.8607]\n    }\n  },\n  \"bandwidth\": {\n    \"allocated\": 3000,\n    \"used\": 0\n  },\n  \"status\": \"active\"\n}"
+                  "raw": "{\n  \"title\": \"Internet connection down - Branch 1\",\n  \"description\": \"Complete loss of connectivity in the specified area. Customer reports no internet access since morning.\",\n  \"priority\": \"urgent\",\n  \"category\": \"technical\",\n  \"customer\": \"{{customer_id}}\"\n}"
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/branches",
-                  "host": ["{{baseUrl}}"],
+                  "raw": "{{base_url}}/admin/tickets",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "tickets"]
+                }
+              }
+            },
+            {
+              "name": "Get My Tickets",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/tickets",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "tickets"]
+                }
+              }
+            },
+            {
+              "name": "Get Ticket By ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/tickets/{{ticket_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "tickets", "{{ticket_id}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Subscriptions",
+          "item": [
+            {
+              "name": "Get Expiring Subscriptions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/subscriptions/expiring",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "subscriptions", "expiring"]
+                }
+              }
+            },
+            {
+              "name": "Get Expired Subscriptions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/subscriptions/expired",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "subscriptions", "expired"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics",
+          "item": [
+            {
+              "name": "Get Customer Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/analytics/customers",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "analytics", "customers"]
+                }
+              }
+            },
+            {
+              "name": "Get Bandwidth Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/analytics/bandwidth",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "analytics", "bandwidth"]
+                }
+              }
+            },
+            {
+              "name": "Get Performance Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/analytics/performance",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "analytics", "performance"]
+                }
+              }
+            },
+            {
+              "name": "Get Subscription Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/analytics/subscriptions",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "analytics", "subscriptions"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Customer Routes",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData._id) {",
+                  "        pm.collectionVariables.set('customer_id', jsonData._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "John Doe",
+                  "type": "text"
+                },
+                {
+                  "key": "cnic",
+                  "value": "4210123456789",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "03001234567",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "john.doe@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "hashPassword",
+                  "value": "customer123",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "123 Main Street, Karachi",
+                  "type": "text"
+                },
+                {
+                  "key": "landmark",
+                  "value": "Near Central Park",
+                  "type": "text"
+                },
+                {
+                  "key": "branch",
+                  "value": "{{branch_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/customers",
+              "host": ["{{base_url}}"],
+              "path": ["customers"]
+            }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "John Doe Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "cnic",
+                  "value": "4210123456789",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "03001234567",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "john.doe@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "hashPassword",
+                  "value": "customer123",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "456 Updated Street, Karachi",
+                  "type": "text"
+                },
+                {
+                  "key": "landmark",
+                  "value": "Near Shopping Mall",
+                  "type": "text"
+                },
+                {
+                  "key": "branch",
+                  "value": "{{branch_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["customers", "{{customer_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Suspend Customer Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/customers/{{customer_id}}/suspend",
+              "host": ["{{base_url}}"],
+              "path": ["customers", "{{customer_id}}", "suspend"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Super Admin Routes",
+      "item": [
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "dashboard"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics",
+          "item": [
+            {
+              "name": "Get System Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/analytics",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "analytics"]
+                }
+              }
+            },
+            {
+              "name": "Get Customer Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/analytics/customers",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "analytics", "customers"]
+                }
+              }
+            },
+            {
+              "name": "Get Bandwidth Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/analytics/bandwidth",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "analytics", "bandwidth"]
+                }
+              }
+            },
+            {
+              "name": "Get Performance Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/analytics/performance",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "analytics", "performance"]
+                }
+              }
+            },
+            {
+              "name": "Get Revenue Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/analytics/revenue",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "analytics", "revenue"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Branch Management",
+          "item": [
+            {
+              "name": "Get All Branches",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/branches",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "branches"]
+                }
+              }
+            },
+            {
+              "name": "Create Branch",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData._id) {",
+                      "        pm.collectionVariables.set('branch_id', jsonData._id);",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Branch 101 - Downtown\",\n  \"location\": {\n    \"address\": \"456 Business Avenue\",\n    \"city\": \"Karachi\",\n    \"coordinates\": [67.0099, 24.8607],\n    \"geolocation\": {\n      \"type\": \"Point\",\n      \"coordinates\": [67.0099, 24.8607]\n    }\n  },\n  \"bandwidth\": {\n    \"allocated\": 5000,\n    \"used\": 0\n  },\n  \"customerCount\": 0,\n  \"status\": \"active\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/superadmin/branches",
+                  "host": ["{{base_url}}"],
                   "path": ["superadmin", "branches"]
                 }
               }
@@ -367,61 +780,9 @@
                 "method": "PUT",
                 "header": [
                   {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"Updated Branch Name\",\n  \"bandwidth\": {\n    \"allocated\": 4000\n  },\n  \"status\": \"maintenance\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/branches/{{branchId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "branches", "{{branchId}}"]
-                }
-              }
-            },
-            {
-              "name": "Delete Branch",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/branches/{{branchId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "branches", "{{branchId}}"]
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "👤 Admin Management",
-          "item": [
-            {
-              "name": "Create Branch Admin",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "    const jsonData = pm.response.json();",
-                      "    pm.collectionVariables.set('adminId', jsonData._id);",
-                      "    console.log('New admin created with ID:', jsonData._id);",
-                      "}",
-                      "",
-                      "pm.test('Status code is 201', function () {",
-                      "    pm.response.to.have.status(201);",
-                      "});"
-                    ]
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  },
                   {
                     "key": "Content-Type",
                     "value": "application/json"
@@ -429,11 +790,58 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"New Branch Admin\",\n  \"email\": \"newadmin@example.com\",\n  \"password\": \"AdminPass123!\",\n  \"role\": \"admin\",\n  \"permissions\": [\"read\", \"write\", \"update\"]\n}"
+                  "raw": "{\n  \"name\": \"Branch 101 - Downtown Updated\",\n  \"location\": {\n    \"address\": \"456 Business Avenue Updated\",\n    \"city\": \"Karachi\",\n    \"coordinates\": [67.0099, 24.8607],\n    \"geolocation\": {\n      \"type\": \"Point\",\n      \"coordinates\": [67.0099, 24.8607]\n    }\n  },\n  \"bandwidth\": {\n    \"allocated\": 6000,\n    \"used\": 1500\n  },\n  \"customerCount\": 50,\n  \"status\": \"active\"\n}"
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/admins",
-                  "host": ["{{baseUrl}}"],
+                  "raw": "{{base_url}}/superadmin/branches/{{branch_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "branches", "{{branch_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Branch",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/branches/{{branch_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "branches", "{{branch_id}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Management",
+          "item": [
+            {
+              "name": "Create Branch Admin",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Branch Admin\",\n  \"email\": \"newadmin@example.com\",\n  \"password\": \"AdminPass123!\",\n  \"branch\": \"{{branch_id}}\",\n  \"role\": \"admin\",\n  \"permissions\": [\"read\", \"write\", \"update\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/superadmin/admins",
+                  "host": ["{{base_url}}"],
                   "path": ["superadmin", "admins"]
                 }
               }
@@ -441,145 +849,56 @@
           ]
         },
         {
-          "name": "📈 Analytics",
+          "name": "Ticket Management",
           "item": [
             {
-              "name": "Customer Analytics",
+              "name": "Get Ticket Statistics",
               "request": {
                 "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/analytics/customers?from=2025-01-01&to=2025-12-31&branch={{branchId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "analytics", "customers"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    },
-                    {
-                      "key": "branch",
-                      "value": "{{branchId}}"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Bandwidth Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/analytics/bandwidth?from=2025-01-01&to=2025-12-31",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "analytics", "bandwidth"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Performance Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/analytics/performance?from=2025-01-01&to=2025-12-31&metric=revenue",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "analytics", "performance"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    },
-                    {
-                      "key": "metric",
-                      "value": "revenue"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Revenue Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/analytics/revenue?from=2025-01-01&to=2025-12-31",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "analytics", "revenue"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    }
-                  ]
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "🎫 Tickets",
-          "item": [
-            {
-              "name": "View All Tickets",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    const jsonData = pm.response.json();",
-                      "    if (jsonData.tickets && jsonData.tickets.length > 0) {",
-                      "        pm.collectionVariables.set('ticketId', jsonData.tickets[0]._id);",
-                      "    }",
-                      "}"
-                    ]
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
                   }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/superadmin/tickets/stats/overview",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "tickets", "stats", "overview"]
                 }
-              ],
+              }
+            },
+            {
+              "name": "Get All Tickets",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/tickets",
-                  "host": ["{{baseUrl}}"],
+                  "raw": "{{base_url}}/superadmin/tickets",
+                  "host": ["{{base_url}}"],
                   "path": ["superadmin", "tickets"]
                 }
               }
             },
             {
-              "name": "View Ticket Details",
+              "name": "Get Ticket Details By ID",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{superadmin_token}}"
+                  }
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/superadmin/tickets/{{ticketId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "tickets", "{{ticketId}}"]
+                  "raw": "{{base_url}}/superadmin/tickets/{{ticket_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "tickets", "{{ticket_id}}"]
                 }
               }
             },
@@ -589,785 +908,28 @@
                 "method": "PUT",
                 "header": [
                   {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"status\": \"resolved\",\n  \"resolution\": \"Issue fixed by technical team\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/superadmin/tickets/{{ticketId}}/status",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["superadmin", "tickets", "{{ticketId}}", "status"]
-                }
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "🏢 Branch Admin",
-      "item": [
-        {
-          "name": "📊 Dashboard",
-          "item": [
-            {
-              "name": "Get Branch Dashboard",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/admin/dashboard",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "dashboard"]
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "👥 Customer Management",
-          "item": [
-            {
-              "name": "List Customers",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    const jsonData = pm.response.json();",
-                      "    if (jsonData.customers && jsonData.customers.length > 0) {",
-                      "        pm.collectionVariables.set('customerId', jsonData.customers[0]._id);",
-                      "        console.log('First customer ID saved:', jsonData.customers[0]._id);",
-                      "    }",
-                      "}"
-                    ]
-                  }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/admin/customers?page=1&limit=20&status=active",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "customers"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "key": "limit",
-                      "value": "20"
-                    },
-                    {
-                      "key": "status",
-                      "value": "active"
-                    },
-                    {
-                      "key": "search",
-                      "value": "john",
-                      "disabled": true
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Add New Customer",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "    const jsonData = pm.response.json();",
-                      "    pm.collectionVariables.set('customerId', jsonData._id);",
-                      "    console.log('New customer created with ID:', jsonData._id);",
-                      "}"
-                    ]
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"personalInfo\": {\n    \"name\": \"John Doe\",\n    \"cnic\": \"4210112345678\",\n    \"phone\": \"03001234567\",\n    \"email\": \"johndoe@example.com\",\n    \"hashPassword\": \"customer123\",\n    \"address\": \"123 Street, Block B, Karachi\",\n    \"landmark\": \"Near City Mall\"\n  }\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/customers",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "customers"]
-                }
-              }
-            },
-            {
-              "name": "Update Customer",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"personalInfo\": {\n    \"phone\": \"03009999999\",\n    \"address\": \"456 New Address, Karachi\"\n  }\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/customers/{{customerId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "customers", "{{customerId}}"]
-                }
-              }
-            },
-            {
-              "name": "Upload Customer Documents",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "documents",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/customers/{{customerId}}/documents",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "customers", "{{customerId}}", "documents"]
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "📈 Analytics",
-          "item": [
-            {
-              "name": "Branch Customer Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/branch/analytics/customers?from=2025-01-01&to=2025-12-31",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["branch", "analytics", "customers"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Branch Bandwidth Usage",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/branch/analytics/bandwidth?from=2025-01-01&to=2025-12-31",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["branch", "analytics", "bandwidth"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Branch Performance Metrics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/branch/analytics/performance?from=2025-01-01&to=2025-12-31&metric=customers",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["branch", "analytics", "performance"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    },
-                    {
-                      "key": "metric",
-                      "value": "customers"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Subscription Analytics",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/branch/analytics/subscriptions?from=2025-01-01&to=2025-12-31&status=active",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["branch", "analytics", "subscriptions"],
-                  "query": [
-                    {
-                      "key": "from",
-                      "value": "2025-01-01"
-                    },
-                    {
-                      "key": "to",
-                      "value": "2025-12-31"
-                    },
-                    {
-                      "key": "status",
-                      "value": "active"
-                    }
-                  ]
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "🎫 Tickets",
-          "item": [
-            {
-              "name": "Create Ticket",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 201) {",
-                      "    const jsonData = pm.response.json();",
-                      "    pm.collectionVariables.set('ticketId', jsonData._id);",
-                      "    console.log('Ticket created with ID:', jsonData._id);",
-                      "}"
-                    ]
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"title\": \"Internet Connection Issue\",\n  \"description\": \"Customer experiencing slow internet speed\",\n  \"priority\": \"high\",\n  \"customerId\": \"{{customerId}}\",\n  \"category\": \"technical\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/tickets",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "tickets"]
-                }
-              }
-            },
-            {
-              "name": "View Ticket Status",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/admin/tickets/{{ticketId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "tickets", "{{ticketId}}"]
-                }
-              }
-            },
-            {
-              "name": "List All Tickets",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
                     "key": "Authorization",
-                    "value": "Bearer {{token}}"
+                    "value": "Bearer {{superadmin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"in_progress\",\n  \"comment\": \"Assigned to technical team for investigation\"\n}"
+                },
                 "url": {
-                  "raw": "{{baseUrl}}/admin/tickets",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "tickets"]
+                  "raw": "{{base_url}}/superadmin/tickets/{{ticket_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["superadmin", "tickets", "{{ticket_id}}", "status"]
                 }
-              },
-              "description": "List all tickets for the logged-in Branch Admin"
+              }
             }
           ]
         }
       ]
-    },
-    {
-      "name": "👥 Customer Management",
-      "item": [
-        {
-          "name": "List All Customers",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.customers && jsonData.customers.length > 0) {",
-                  "        pm.collectionVariables.set('customerId', jsonData.customers[0]._id);",
-                  "    }",
-                  "}",
-                  "",
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/customers?page=1&limit=20&status=active",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                },
-                {
-                  "key": "status",
-                  "value": "active"
-                },
-                {
-                  "key": "branch",
-                  "value": "{{branchId}}",
-                  "disabled": true
-                },
-                {
-                  "key": "search",
-                  "value": "john",
-                  "disabled": true
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Customer",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('customerId', jsonData._id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"personalInfo\": {\n    \"name\": \"Jane Smith\",\n    \"cnic\": \"4210187654321\",\n    \"phone\": \"03117654321\",\n    \"email\": \"janesmith@example.com\",\n    \"hashPassword\": \"customer123\",\n    \"address\": \"789 Park Avenue, Karachi\",\n    \"landmark\": \"Near Green Park\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/customers",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers"]
-            }
-          }
-        },
-        {
-          "name": "Get Customer Details",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/customers/{{customerId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers", "{{customerId}}"]
-            }
-          }
-        },
-        {
-          "name": "Update Customer",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"personalInfo\": {\n    \"phone\": \"03221234567\",\n    \"address\": \"Updated Address, Karachi\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/customers/{{customerId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers", "{{customerId}}"]
-            }
-          }
-        },
-        {
-          "name": "Suspend Customer Service",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"reason\": \"Payment overdue\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/customers/{{customerId}}/suspend",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers", "{{customerId}}", "suspend"]
-            }
-          }
-        },
-        {
-          "name": "Activate Customer Service",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/customers/{{customerId}}/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["customers", "{{customerId}}", "activate"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "📦 Package Management",
-      "item": [
-        {
-          "name": "List All Packages",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.packages && jsonData.packages.length > 0) {",
-                  "        pm.collectionVariables.set('packageId', jsonData.packages[0]._id);",
-                  "        console.log('First package ID saved:', jsonData.packages[0]._id);",
-                  "    }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/packages",
-              "host": ["{{baseUrl}}"],
-              "path": ["packages"]
-            }
-          }
-        },
-        {
-          "name": "Get Package Details",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/packages/{{packageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["packages", "{{packageId}}"]
-            }
-          }
-        },
-        {
-          "name": "Create Package",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('packageId', jsonData._id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Ultra Speed Plan\",\n  \"speedMbps\": 200,\n  \"dataLimitGB\": 5000,\n  \"durationMonths\": 12,\n  \"price\": 8000,\n  \"description\": \"Best for gaming and streaming\",\n  \"isActive\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/packages",
-              "host": ["{{baseUrl}}"],
-              "path": ["packages"]
-            }
-          }
-        },
-        {
-          "name": "Update Package",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"price\": 7500,\n  \"description\": \"Updated description\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/packages/{{packageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["packages", "{{packageId}}"]
-            }
-          }
-        },
-        {
-          "name": "Delete Package",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/packages/{{packageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["packages", "{{packageId}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "📋 Subscription Management",
-      "item": [
-        {
-          "name": "List All Subscriptions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.subscriptions && jsonData.subscriptions.length > 0) {",
-                  "        pm.collectionVariables.set('subscriptionId', jsonData.subscriptions[0]._id);",
-                  "    }",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/subscriptions?status=active",
-              "host": ["{{baseUrl}}"],
-              "path": ["subscriptions"],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "active"
-                },
-                {
-                  "key": "customerId",
-                  "value": "{{customerId}}",
-                  "disabled": true
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Subscription",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('subscriptionId', jsonData._id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"customer\": \"{{customerId}}\",\n  \"package\": \"{{packageId}}\",\n  \"startDate\": \"2025-10-12\",\n  \"endDate\": \"2026-10-12\",\n  \"status\": \"active\",\n  \"autoRenewal\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/subscriptions",
-              "host": ["{{baseUrl}}"],
-              "path": ["subscriptions"]
-            }
-          }
-        },
-        {
-          "name": "Get Subscription Details",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/subscriptions/{{subscriptionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["subscriptions", "{{subscriptionId}}"]
-            }
-          }
-        },
-        {
-          "name": "Update Subscription",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"autoRenewal\": false,\n  \"status\": \"suspended\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/subscriptions/{{subscriptionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["subscriptions", "{{subscriptionId}}"]
-            }
-          }
-        },
-        {
-          "name": "Renew Subscription",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"newEndDate\": \"2027-10-12\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/subscriptions/{{subscriptionId}}/renew",
-              "host": ["{{baseUrl}}"],
-              "path": ["subscriptions", "{{subscriptionId}}", "renew"]
-            }
-          }
-        }
-      ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Auto-attach token to all requests",
-          "const token = pm.collectionVariables.get('token');",
-          "if (token) {",
-          "    pm.request.headers.add({",
-          "        key: 'Authorization',",
-          "        value: 'Bearer ' + token",
-          "    });",
-          "}"
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Global test scripts",
-          "pm.test('Response time is less than 5000ms', function () {",
-          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
-          "});",
-          "",
-          "// Log response for debugging",
-          "if (pm.response.code >= 400) {",
-          "    console.log('Error Response:', pm.response.json());",
-          "}"
-        ]
-      }
     }
   ]
 }

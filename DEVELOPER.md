@@ -392,63 +392,92 @@ Content-Type: application/json
 ### API Endpoints Overview
 
 #### 🔐 Authentication Endpoints
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/auth/login` | User authentication | Public |
-| POST | `/auth/logout` | User logout | Authenticated |
-| GET | `/auth/profile` | Get user profile | Authenticated |
+
+| Method   | Endpoint        | Description                        | Access        |
+| -------- | --------------- | ---------------------------------- | ------------- |
+| **POST** | `/auth/login`   | Authenticate user and return token | Public        |
+| **POST** | `/auth/logout`  | Log out authenticated user         | Authenticated |
+| **GET**  | `/auth/profile` | Get current user profile           | Authenticated |
+
+---
 
 #### 👑 Super Admin Endpoints
-| Method | Endpoint | Description | Parameters |
-|--------|----------|-------------|------------|
-| GET | `/superadmin/dashboard` | Dashboard analytics | - |
-| GET | `/superadmin/branches` | List all branches | `?page&limit&city` |
-| POST | `/superadmin/branches` | Create new branch | Branch data |
-| PUT | `/superadmin/branches/:id` | Update branch | Branch ID |
-| DELETE | `/superadmin/branches/:id` | Delete branch | Branch ID |
-| POST | `/superadmin/admins` | Create branch admin | Admin data |
-| GET | `/superadmin/analytics` | System analytics | `?period&branch` |
+
+| Method     | Endpoint                             | Description                            | Parameters                     |
+| ---------- | ------------------------------------ | -------------------------------------- | ------------------------------ |
+| **GET**    | `/superadmin/dashboard`              | Get overall system dashboard analytics | -                              |
+| **GET**    | `/superadmin/analytics`              | Get combined system analytics overview | `?period&branch`               |
+| **GET**    | `/superadmin/branches`               | List all branches                      | `?page&limit&city(optional)`   |
+| **POST**   | `/superadmin/branches`               | Create a new branch                    | Branch data                    |
+| **PUT**    | `/superadmin/branches/:id`           | Update branch details                  | Branch ID                      |
+| **DELETE** | `/superadmin/branches/:id`           | Delete an existing branch              | Branch ID                      |
+| **POST**   | `/superadmin/admins`                 | Create or assign branch admin          | Admin data                     |
+| **GET**    | `/superadmin/tickets/stats/overview` | Get summarized ticket statistics       | -                              |
+| **GET**    | `/superadmin/tickets`                | Get all tickets across branches        | `?status&page&limit(optional)` |
+| **GET**    | `/superadmin/tickets/:id`            | Get details of a specific ticket       | Ticket ID                      |
+| **PUT**    | `/superadmin/tickets/:id/status`     | Update ticket status                   | Ticket ID                      |
+| **GET**    | `/superadmin/analytics/customers`    | View customer analytics                | `from,to,branch(optional)`     |
+| **GET**    | `/superadmin/analytics/bandwidth`    | Monitor total bandwidth usage          | `from,to,branch(optional)`     |
+| **GET**    | `/superadmin/analytics/performance`  | Compare branch performance             | `from,to,metric(optional)`     |
+| **GET**    | `/superadmin/analytics/revenue`      | Track revenue trends                   | `from,to`                      |
+
+---
 
 #### 🏢 Branch Admin Endpoints
-| Method | Endpoint | Description | Parameters |
-|--------|----------|-------------|------------|
-| GET | `/admin/dashboard` | Branch dashboard | - |
-| GET | `/admin/customers` | List customers | `?page&limit&status&search` |
-| POST | `/admin/customers` | Add new customer | Customer data |
-| PUT | `/admin/customers/:id` | Update customer | Customer ID |
-| POST | `/admin/customers/:id/documents` | Upload documents | File upload |
+
+| Method   | Endpoint                         | Description                              | Parameters                            |
+| -------- | -------------------------------- | ---------------------------------------- | ------------------------------------- |
+| **GET**  | `/admin/dashboard`               | Get branch admin dashboard overview      | -                                     |
+| **GET**  | `/admin/customers`               | List customers under branch              | `?page&limit&status&search(optional)` |
+| **GET**  | `/admin/customers/:id`           | View a specific customer’s details       | Customer ID                           |
+| **POST** | `/admin/tickets`                 | Create a new customer support ticket     | Ticket data                           |
+| **GET**  | `/admin/tickets`                 | View all tickets created by branch admin | `?page&limit&status(optional)`        |
+| **GET**  | `/admin/tickets/:id`             | View ticket details                      | Ticket ID                             |
+| **GET**  | `/admin/subscriptions/expiring`  | Get soon-to-expire subscriptions         | -                                     |
+| **GET**  | `/admin/subscriptions/expired`   | Get already expired subscriptions        | -                                     |
+| **GET**  | `/admin/analytics/customers`     | Branch-level customer analytics          | `from,to(optional)`                   |
+| **GET**  | `/admin/analytics/bandwidth`     | Branch bandwidth analytics               | `from,to(optional)`                   |
+| **GET**  | `/admin/analytics/performance`   | Branch performance metrics               | `from,to,metric(optional)`            |
+| **GET**  | `/admin/analytics/subscriptions` | Subscription analytics                   | `from,to,status(optional)`            |
+
+---
 
 #### 👥 Customer Management Endpoints
-| Method | Endpoint | Description | Query Parameters |
-|--------|----------|-------------|------------------|
-| GET | `/customers` | List customers | `page, limit, status, branch, search` |
-| POST | `/customers` | Create customer | - |
-| GET | `/customers/:id` | Get customer details | - |
-| PUT | `/customers/:id` | Update customer | - |
-| POST | `/customers/:id/suspend` | Suspend service | - |
-| POST | `/customers/:id/activate` | Activate service | - |
 
-#### 🎫 Ticket Management Endpoints
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/admin/tickets` | Create new ticket | Branch Admin |
-| GET | `/admin/tickets/:id` | View ticket status | Branch Admin |
-| GET | `/admin/tickets` | List all tickets | Branch Admin |
-| GET | `/superadmin/tickets` | View all tickets | Super Admin |
-| GET | `/superadmin/tickets/:id` | View ticket details | Super Admin |
-| PUT | `/superadmin/tickets/:id/status` | Update ticket status | Super Admin |
+| Method   | Endpoint                 | Description                                 | Access        |
+| -------- | ------------------------ | ------------------------------------------- | ------------- |
+| **POST** | `/customers`             | Create new customer with uploaded documents | Authenticated |
+| **PUT**  | `/customers/:id`         | Update customer details and documents       | Authenticated |
+| **POST** | `/customers/:id/suspend` | Suspend a customer’s internet service       | Authenticated |
 
-#### 📊 Analytics & Reporting Endpoints
-| Role | Method | Endpoint | Description | Parameters |
-|------|--------|----------|-------------|------------|
-| **Super Admin** | GET | `/superadmin/analytics/customers` | View all customer analytics | `from, to, branch(optional)` |
-| **Super Admin** | GET | `/superadmin/analytics/bandwidth` | Monitor bandwidth usage | `from, to, branch(optional)` |
-| **Super Admin** | GET | `/superadmin/analytics/performance` | Compare branch performance | `from, to, metric` |
-| **Super Admin** | GET | `/superadmin/analytics/revenue` | Track revenue trends | `from, to` |
-| **Branch Admin** | GET | `/branch/analytics/customers` | Branch customer analytics | `from, to` |
-| **Branch Admin** | GET | `/branch/analytics/bandwidth` | Branch bandwidth usage | `from, to` |
-| **Branch Admin** | GET | `/branch/analytics/performance` | Branch performance metrics | `from, to, metric` |
-| **Branch Admin** | GET | `/branch/analytics/subscriptions` | Track subscriptions | `from, to, status(optional)` |
+---
+
+#### 🎫 Ticket Management Summary
+
+| Role             | Method   | Endpoint                             | Description                             |
+| ---------------- | -------- | ------------------------------------ | --------------------------------------- |
+| **Branch Admin** | **POST** | `/admin/tickets`                     | Create new ticket for a customer        |
+| **Branch Admin** | **GET**  | `/admin/tickets`                     | List all tickets created by this branch |
+| **Branch Admin** | **GET**  | `/admin/tickets/:id`                 | View specific ticket details            |
+| **Super Admin**  | **GET**  | `/superadmin/tickets`                | Get all tickets across branches         |
+| **Super Admin**  | **GET**  | `/superadmin/tickets/:id`            | Get details of a specific ticket        |
+| **Super Admin**  | **PUT**  | `/superadmin/tickets/:id/status`     | Update status of a ticket               |
+| **Super Admin**  | **GET**  | `/superadmin/tickets/stats/overview` | Get summarized ticket statistics        |
+
+---
+
+#### 📊 Analytics & Reporting Endpoints (Summary)
+
+| Role             | Method  | Endpoint                            | Description                        | Parameters                 |
+| ---------------- | ------- | ----------------------------------- | ---------------------------------- | -------------------------- |
+| **Super Admin**  | **GET** | `/superadmin/analytics/customers`   | View all-customer analytics        | `from,to,branch(optional)` |
+| **Super Admin**  | **GET** | `/superadmin/analytics/bandwidth`   | Monitor bandwidth usage            | `from,to,branch(optional)` |
+| **Super Admin**  | **GET** | `/superadmin/analytics/performance` | Compare branch performance         | `from,to,metric(optional)` |
+| **Super Admin**  | **GET** | `/superadmin/analytics/revenue`     | Track total revenue trends         | `from,to(optional)`        |
+| **Branch Admin** | **GET** | `/admin/analytics/customers`        | View customer analytics for branch | `from,to(optional)`        |
+| **Branch Admin** | **GET** | `/admin/analytics/bandwidth`        | Monitor bandwidth usage            | `from,to(optional)`        |
+| **Branch Admin** | **GET** | `/admin/analytics/performance`      | Analyze performance metrics        | `from,to,metric(optional)` |
+| **Branch Admin** | **GET** | `/admin/analytics/subscriptions`    | Track subscription analytics       | `from,to,status(optional)` |
 
 ---
 
@@ -832,12 +861,5 @@ This project is developed as part of the BanoQabil Web Development 3 course curr
 
 - **BanoQabil Team** for providing the learning platform
 - **Instructors** for guidance and support
-- **Industry Experts** for best practice recommendations
 
 ---
-
-<div align="center">
-
-**⭐ Star this repository if you find it helpful!**
-
-</div>
