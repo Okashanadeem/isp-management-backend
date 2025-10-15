@@ -78,31 +78,26 @@ export const getBranches = async (req, res, next) => {
 // ========================== CREATE BRANCH ==========================
 export const createBranch = async (req, res, next) => {
   try {
-    const {
-      name,
-      address,
-      city,
-      coordinates,
-      allocated,
-      adminId,
-      customerCount,
-    } = req.body;
+    const { name, location, bandwidth, adminId, customerCount, status } = req.body;
 
     const branch = await Branch.create({
       name,
       location: {
-        address,
-        city,
-        coordinates,
-        geolocation: { type: "Point", coordinates },
+        address: location.address,
+        city: location.city,
+        coordinates: location.coordinates,
+        geolocation: location.geolocation || {
+          type: "Point",
+          coordinates: location.coordinates,
+        },
       },
       bandwidth: {
-        allocated,
-        used: 0,
-        remaining: allocated,
+        allocated: bandwidth?.allocated || 0,
+        used: bandwidth?.used || 0,
       },
       admin: adminId || null,
       customerCount: customerCount || 0,
+      status: status || "active",
     });
 
     res.status(201).json({
@@ -111,7 +106,7 @@ export const createBranch = async (req, res, next) => {
       data: branch,
     });
   } catch (error) {
-    console.error(error); // log real error for debugging
+    console.error(error);
     next(
       new AppError(
         `${ERROR_MESSAGES.BRANCH.CREATION_FAILED.message}: ${error.message}`,
@@ -120,6 +115,7 @@ export const createBranch = async (req, res, next) => {
     );
   }
 };
+
 
 // ========================== UPDATE BRANCH ==========================
 export const updateBranch = async (req, res, next) => {
