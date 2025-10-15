@@ -29,7 +29,7 @@ const customerSchema = new mongoose.Schema({
   ]
 }, { timestamps: true });
 
-// indexes for unique nested fields
+// indexes for unique fields
 customerSchema.index({ "personalInfo.email": 1 }, { unique: true });
 customerSchema.index({ "personalInfo.cnic": 1 }, { unique: true });
 customerSchema.index({ "personalInfo.phone": 1 }, { unique: true });

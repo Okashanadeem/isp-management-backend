@@ -37,7 +37,7 @@ const subscriptionSchema = new mongoose.Schema(
         newEndDate: { type: Date },
         renewedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "BranchAdmin", // fixed capitalization for consistency
+          ref: "BranchAdmin", 
         },
       },
     ],

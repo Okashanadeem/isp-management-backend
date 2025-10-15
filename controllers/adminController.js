@@ -1,5 +1,9 @@
 import Customer from "../models/customerModel.js";
 import Ticket from "../models/ticketModel.js";
+import CustomerSubscription from "../models/customerSubscriptionModel.js";  
+import ERROR_MESSAGES from "../utils/errors.js";
+import moment from "moment";                                                 
+                                                        
 import Branch from "../models/branchModel.js";
 import CustomerSubscription from "../models/customerSubscriptionModel.js";
 import ERROR_MESSAGES from "../utils/errors.js";
@@ -22,7 +26,7 @@ export const getDashboard = async (req, res) => {
         .populate("createdBy", "name email")
         .populate("customer", "personalInfo.name personalInfo.email")
         .sort({ createdAt: -1 })
-        .limit(5), // Show latest 5 tickets
+        .limit(5), 
     ]);
 
     res.json({
@@ -41,16 +45,35 @@ export const getDashboard = async (req, res) => {
   }
 };
 
-
-
+                // List Customer
 export const listCustomers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
-    const branchId = req.user.branch;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status,
+      plan,
+      subscriptionDate,
+      expiryDate,
+    } = req.query;
 
-    // Restrict non-superadmins to their branch only
-    const query =
+    const branchId = req.user.branch; // from JWT
+
+     // Role-based base query (superadmin vs branch admin)
+    const baseQuery =
       req.user.role === "superadmin"
+        ? { "personalInfo.name": { $regex: search, $options: "i" } }
+        : { branch: branchId, "personalInfo.name": { $regex: search, $options: "i" } };
+
+    //  Add ObjectId search 
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(search);
+    if (search && isObjectId) {
+      baseQuery.$or = [
+        { "personalInfo.name": { $regex: search, $options: "i" } },
+        { _id: search },
+      ];
+    }
         ? {
           "personalInfo.name": { $regex: search, $options: "i" },
         }
@@ -59,132 +82,110 @@ export const listCustomers = async (req, res) => {
           "personalInfo.name": { $regex: search, $options: "i" },
         };
 
-    const customers = await Customer.find(query)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    //Reusable lookups (to avoid repeating in total count)
+    const lookups = [
+      {
+        $lookup: {
+          from: "customersubscriptions",
+          localField: "_id",
+          foreignField: "customer",
+          as: "subscription",
+        },
+      },
+      { $unwind: { path: "$subscription", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "packages",
+          localField: "subscription.package",
+          foreignField: "_id",
+          as: "package",
+        },
+      },
+      { $unwind: { path: "$package", preserveNullAndEmptyArrays: true } },
+    ];
 
-    const total = await Customer.countDocuments(query);
+    // Compact filter creation
+    const matchConditions = [
+      status && { "subscription.status": status },
+      plan && { "package.name": { $regex: plan, $options: "i" } },
+      subscriptionDate && { "subscription.startDate": { $gte: new Date(subscriptionDate) } },
+      expiryDate && { "subscription.endDate": { $lte: new Date(expiryDate) } },
+    ].filter(Boolean);
 
-    res.json({
+    //  Main aggregation pipeline
+    const pipeline = [
+      { $match: baseQuery },
+      ...lookups,
+      ...(matchConditions.length ? [{ $match: { $and: matchConditions } }] : []),
+      { $skip: (page - 1) * Number(limit) },
+      { $limit: Number(limit) },
+    ];
+
+    const customers = await Customer.aggregate(pipeline);
+
+    // total count query 
+    const totalResults = await Customer.aggregate([
+      { $match: baseQuery },
+      ...lookups,
+      ...(matchConditions.length ? [{ $match: { $and: matchConditions } }] : []),
+      { $count: "total" },
+    ]);
+
+    const total = totalResults[0]?.total || 0;
+
+    res.status(ERROR_MESSAGES.SYSTEM.UNKNOWN_ERROR.statusCode).json({
       message: "Customers fetched successfully",
       total,
       currentPage: Number(page),
       customers,
     });
+
   } catch (error) {
-    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
-      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
-      details: error.message,
-    });
+    console.error("Error listing customers:", error);
+    
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
+      });
   }
 };
+              // get Customer Details
 
-
-export const addCustomer = async (req, res) => {
+export const getCustomerById = async (req, res) => {
   try {
+    // only access customers from their branch
     const branchId = req.user.branch;
+    const customer = await Customer.findOne({
+      _id: req.params.id,
+      ...(req.user.role === "branchadmin" ? { branch: branchId } : {}), 
+    })
+      .select("personalInfo documents createdAt updatedAt") 
+      .lean();
 
-    const newCustomer = new Customer({
-      personalInfo: req.body,
-      branch: branchId,
-    });
+    if (!customer)
+      return res
+        .status(ERROR_MESSAGES.USER.NOT_FOUND.status)
+        .json({ error: ERROR_MESSAGES.USER.NOT_FOUND });
 
-    await newCustomer.save();
-
-    res.status(201).json({
-      message: "Customer added successfully",
-      customer: newCustomer,
-    });
-  } catch (error) {
-    res.status(ERROR_MESSAGES.USER.CREATION_FAILED.status).json({
-      error: ERROR_MESSAGES.USER.CREATION_FAILED,
-      details: error.message,
-    });
-  }
-};
-
-
-export const updateCustomer = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Ensure admin can only update their branch's customers
-    const query =
-      req.user.role === "superadmin"
-        ? { _id: id }
-        : { _id: id, branch: req.user.branch };
-
-    const updated = await Customer.findOneAndUpdate(
-      query,
-      { personalInfo: req.body },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(ERROR_MESSAGES.USER.NOT_FOUND.status).json({
-        error: ERROR_MESSAGES.USER.NOT_FOUND,
-      });
-    }
+    //  Fetch subscription 
+    const subscription = await CustomerSubscription.findOne({ customer: customer._id })
+      .populate("package", "name speedMbps dataLimitGB durationMonths price description") 
+      .lean();
 
     res.json({
-      message: "Customer updated successfully",
-      customer: updated,
+      message: "Customer details fetched successfully",
+      customer,
+      subscription,
     });
   } catch (error) {
-    res.status(ERROR_MESSAGES.USER.UPDATE_FAILED.status).json({
-      error: ERROR_MESSAGES.USER.UPDATE_FAILED,
-      details: error.message,
-    });
-  }
-};
-
-
-export const uploadDocuments = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        error: ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR,
-        details: "No files were uploaded",
+    res
+      .status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status)
+      .json({
+        error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+        details: error.message,
       });
-    }
-
-    const uploadedDocs = req.files.map((file) => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      path: file.path,
-      mimetype: file.mimetype,
-      size: file.size,
-    }));
-
-    // Restrict non-superadmins to their branch's customers
-    const query =
-      req.user.role === "superadmin"
-        ? { _id: id }
-        : { _id: id, branch: req.user.branch };
-
-    const updatedCustomer = await Customer.findOneAndUpdate(
-      query,
-      { $push: { documents: { $each: uploadedDocs } } },
-      { new: true }
-    );
-
-    if (!updatedCustomer) {
-      return res.status(ERROR_MESSAGES.USER.NOT_FOUND.status).json({
-        error: ERROR_MESSAGES.USER.NOT_FOUND,
-      });
-    }
-
-    res.json({
-      message: "Documents uploaded successfully",
-      documents: uploadedDocs,
-    });
-  } catch (error) {
-    res.status(ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR.status).json({
-      error: ERROR_MESSAGES.SYSTEM.FILE_SYSTEM_ERROR,
-      details: error.message,
-    });
   }
 };
 
@@ -193,7 +194,7 @@ export const createTicket = async (req, res) => {
     const { title, description, priority, category, customerId } = req.body;
     const branchId = req.user.branch;
 
-    // Verify customer exists and belongs to the branch (if customerId provided)
+    // Verify customer exists and belongs to the branch 
     if (customerId) {
       const customer = await Customer.findOne({
         _id: customerId,
@@ -325,6 +326,48 @@ export const getTicketById = async (req, res) => {
   }
 };
 
+// Expiring within 2 days
+export const getExpiringSubscriptions = async (req, res) => {
+  try {
+    const now = moment().startOf('day');
+    const twoDaysFromNow = moment().add(2, 'days').endOf('day');
+
+    const expiringSoon = await CustomerSubscription.find({
+      endDate: { $gte: now.toDate(), $lte: twoDaysFromNow.toDate() },
+      status: 'active',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expiringSoon.length,
+      expiringSoon,
+    });
+  } catch (error) {
+    console.error('Error fetching expiring subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// expire today
+export const getExpiredSubscriptions = async (req, res) => {
+  try {
+    const today = moment().startOf('day');
+
+    const expired = await CustomerSubscription.find({
+      endDate: { $lt: today.toDate() },
+      status: 'expired',
+    }).populate('customer package');
+
+    res.status(200).json({
+      success: true,
+      total: expired.length,
+      expired,
+    });
+  } catch (error) {
+    console.error('Error fetching expired subscriptions:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 // ========================== BRANCH ANALYTICS FUNCTIONS ==========================
 
 // Branch customer analytics

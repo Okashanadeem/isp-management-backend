@@ -7,6 +7,9 @@ const { sign } = jwt;
 
 // Create JWT access token
 function createAccessToken(user) {
+  return sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || '1h',
+  });
   return sign(
     { id: user._id, role: user.role, branch: user.branch }, // <-- add branch here
     process.env.JWT_SECRET,
