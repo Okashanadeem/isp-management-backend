@@ -49,8 +49,19 @@ const seedBranches = async () => {
       });
     }
 
-    await Branch.insertMany(branches);
-    console.log(`${branches.length} branches created successfully!`);
+    const created = await Branch.insertMany(branches);
+    console.log(`${created.length} branches created successfully!`);
+
+    // Assign each branch to its admin user (one branch per admin may be overwritten)
+    for (const b of created) {
+      try {
+        if (b.admin) {
+          await User.findByIdAndUpdate(b.admin, { branch: b._id });
+        }
+      } catch (err) {
+        console.warn(`Failed to assign branch ${b._id} to admin ${b.admin}:`, err.message);
+      }
+    }
   } catch (error) {
     console.error("Error seeding branches:", error);
   }

@@ -11,6 +11,10 @@ import {
   getTicketDetailsById,
   updateTicketStatus,
   getTicketStats,
+  getCustomerAnalytics,
+  getBandwidthAnalytics,
+  getPerformanceAnalytics,
+  getRevenueAnalytics,
 } from "../controllers/superAdminController.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -65,6 +69,35 @@ router.put(
   protect,
   authorizeRoles("superadmin"),
   updateTicketStatus
+);
+
+// Analytics routes
+router.get(
+  "/analytics/customers",
+  protect,
+  authorizeRoles("superadmin"),
+  getCustomerAnalytics
+);
+
+router.get(
+  "/analytics/bandwidth",
+  protect,
+  authorizeRoles("superadmin"),
+  getBandwidthAnalytics
+);
+
+router.get(
+  "/analytics/performance",
+  protect,
+  authorizeRoles("superadmin"),
+  getPerformanceAnalytics
+);
+
+router.get(
+  "/analytics/revenue",
+  protect,
+  authorizeRoles("superadmin"),
+  getRevenueAnalytics
 );
 
 export default router;

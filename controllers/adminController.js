@@ -4,6 +4,11 @@ import CustomerSubscription from "../models/customerSubscriptionModel.js";
 import ERROR_MESSAGES from "../utils/errors.js";
 import moment from "moment";                                                 
                                                         
+import Branch from "../models/branchModel.js";
+import CustomerSubscription from "../models/customerSubscriptionModel.js";
+import ERROR_MESSAGES from "../utils/errors.js";
+import mongoose from "mongoose";
+
 
 export const getDashboard = async (req, res) => {
   try {
@@ -69,6 +74,13 @@ export const listCustomers = async (req, res) => {
         { _id: search },
       ];
     }
+        ? {
+          "personalInfo.name": { $regex: search, $options: "i" },
+        }
+        : {
+          branch: branchId,
+          "personalInfo.name": { $regex: search, $options: "i" },
+        };
 
     //Reusable lookups (to avoid repeating in total count)
     const lookups = [
@@ -356,3 +368,264 @@ export const getExpiredSubscriptions = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+// ========================== BRANCH ANALYTICS FUNCTIONS ==========================
+
+// Branch customer analytics
+export const getBranchCustomerAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
+    const result = await Customer.aggregate([
+      {
+        $match: { branch: branchObjectId }
+      },
+      {
+        $group: {
+          _id: null,
+          totalCustomers: { $sum: 1 },
+          customersWithDocuments: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$documents", []] } }, 0] }, 1, 0]
+            }
+          },
+          avgDocumentsPerCustomer: {
+            $avg: { $size: { $ifNull: ["$documents", []] } }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      message: "Branch customer analytics",
+      data: result[0] || {
+        totalCustomers: 0,
+        customersWithDocuments: 0,
+        avgDocumentsPerCustomer: 0
+      }
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
+// Branch bandwidth usage
+export const getBranchBandwidthAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to } = req.query;
+
+   
+    // Validate branchId before converting to ObjectId
+    if (!branchId || !mongoose.isValidObjectId(branchId)) {
+      // no branch available on the user or invalid id -> return default object
+      return res.json({
+        message: "Branch Bandwidth analytics",
+        data: {
+          _id: branchId || null,
+          name: null,
+          city: null,
+          bandwidthAllocated: 0,
+          bandwidthUsed: 0,
+          bandwidthRemaining: 0,
+          usagePercentage: 0,
+        },
+      });
+    }
+
+    const result = await Branch.aggregate([
+      // Ensure we match by ObjectId; branchId may be a string
+      { $match: { _id: new mongoose.Types.ObjectId(branchId) } },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          city: "$location.city",
+          bandwidthAllocated: "$bandwidth.allocated",
+          bandwidthUsed: "$bandwidth.used",
+          bandwidthRemaining: "$bandwidth.remaining",
+          usagePercentage: {
+            // guard against divide-by-zero if allocated is 0
+            $round: [
+              {
+                $multiply: [
+                  {
+                    $cond: [
+                      { $gt: ["$bandwidth.allocated", 0] },
+                      { $divide: ["$bandwidth.used", "$bandwidth.allocated"] },
+                      0
+                    ]
+                  },
+                  100
+                ]
+              },
+              2
+            ]
+          }
+        }
+      }
+    ]);
+    console.log("Branch ID:", branchId);
+
+    // Aggregate returns an array; return the single object or defaults
+    const data = (result && result.length > 0) ? result[0] : {
+      _id: branchId,
+      name: null,
+      city: null,
+      bandwidthAllocated: 0,
+      bandwidthUsed: 0,
+      bandwidthRemaining: 0,
+      usagePercentage: 0
+    };
+
+    res.json({
+      message: "Branch Bandwidth analytics",
+      data
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+
+    });
+  }
+};
+
+// Branch performance metrics
+export const getBranchPerformanceAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to, metric } = req.query;
+
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
+    const matchStage = { branch: branchObjectId };
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+
+    const result = await Customer.aggregate([
+      {
+        $match: matchStage
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" }
+          },
+          totalCustomers: { $sum: 1 },
+          customersWithDocuments: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$documents", []] } }, 0] }, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    res.json({
+      message: "Branch registration trends",
+      data: result
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
+// Track subscriptions
+export const getBranchSubscriptionAnalytics = async (req, res) => {
+  try {
+    const branchId = req.user.branch;
+    const { from, to, status } = req.query;
+
+    // Convert branchId to ObjectId if it's a string
+    const branchObjectId = mongoose.Types.ObjectId.isValid(branchId) 
+      ? new mongoose.Types.ObjectId(branchId) 
+      : branchId;
+
+    // First, get all customers for this branch
+    const customers = await Customer.find({ branch: branchObjectId }).select('_id');
+    const customerIds = customers.map(c => c._id);
+
+    const matchStage = { 
+      customer: { $in: customerIds }
+    };
+    
+    if (status) {
+      matchStage.status = status;
+    }
+    
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) matchStage.createdAt.$lte = new Date(to);
+    }
+
+    const result = await CustomerSubscription.aggregate([
+      {
+        $match: matchStage
+      },
+      {
+        $group: {
+          _id: null,
+          totalSubscriptions: { $sum: 1 },
+          activeSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "active"] }, 1, 0]
+            }
+          },
+          expiredSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "expired"] }, 1, 0]
+            }
+          },
+          pendingSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "pending"] }, 1, 0]
+            }
+          },
+          suspendedSubscriptions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "suspended"] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    res.json({
+      message: "Subscription analytics",
+      data: result[0] || {
+        totalSubscriptions: 0,
+        activeSubscriptions: 0,
+        expiredSubscriptions: 0,
+        pendingSubscriptions: 0,
+        suspendedSubscriptions: 0
+      }
+    });
+  } catch (error) {
+    res.status(ERROR_MESSAGES.SYSTEM.DATABASE_ERROR.status).json({
+      error: ERROR_MESSAGES.SYSTEM.DATABASE_ERROR,
+      details: error.message,
+    });
+  }
+};
+
