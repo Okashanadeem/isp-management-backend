@@ -1,27 +1,30 @@
-import express from 'express';
+import express from "express";
 import {
-  listCustomers,
   createCustomer,
-  getCustomerById,
   updateCustomer,
-  suspendService,
-  activateService
-} from '../controllers/customerController.js';
-import { validateCustomer } from '../validators/customerValidator.js';
-import validate from '../middlewares/validateMiddleware.js'; 
-
+  suspendService,       
+} from "../controllers/customerController.js";
+import { validateCustomer } from "../validators/customerValidator.js";
+import validate from "../middlewares/validateMiddleware.js";
+import upload from "../middlewares/uploadMiddleware.js";   
 const router = express.Router();
 
-router.get('/', listCustomers);
 
-router.post('/', validate(validateCustomer), createCustomer);
+router.post(
+  "/", 
+  upload.array("documents", 5),          
+  validate(validateCustomer), 
+  createCustomer
+);
 
-router.get('/:id', getCustomerById);
+router.put(
+  "/:id",
+  upload.array("documents", 5),          
+  validate(validateCustomer),
+  updateCustomer
+);
 
-router.put('/:id', validate(validateCustomer), updateCustomer);
+router.post("/:id/suspend", suspendService);
 
-router.post('/:id/suspend', suspendService);
-
-router.post('/:id/activate', activateService);
 
 export default router;

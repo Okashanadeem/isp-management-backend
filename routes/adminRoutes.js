@@ -2,65 +2,39 @@ import express from "express";
 import {
   getDashboard,
   listCustomers,
-  addCustomer,
-  updateCustomer,
-  uploadDocuments,
+  getCustomerById,
   createTicket,
   getMyTickets,
   getTicketById,
+  getExpiringSubscriptions,
+  getExpiredSubscriptions,
 } from "../controllers/adminController.js";
 
 import upload from "../middlewares/uploadMiddleware.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
-import { getExpiringSubscriptions, getExpiredSubscriptions } from '../controllers/adminController.js';
 
 const router = express.Router();
 
 router.get("/dashboard", protect, authorizeRoles("admin"), getDashboard);
 
 router.get("/customers", protect, authorizeRoles("admin"), listCustomers);
-
+router.get("/customers/:id", protect, authorizeRoles("admin"), getCustomerById);
 router.post("/customers", protect, authorizeRoles("admin"), addCustomer);
 
-router.put("/customers/:id", protect, authorizeRoles("admin"), updateCustomer);
+// router.put(
+//   "/customers/:id",
+//   protect,
+//   authorizeRoles("admin"),
+//   upload.array("documents", 5),  
+//   updateCustomer
+// );
 
-// Upload documents for a specific customer
-router.post(
-  "/customers/:id/documents",
-  protect,
-  authorizeRoles("admin"),
-  upload.array("documents", 5),
-  uploadDocuments
-);
+router.post("/tickets", protect, authorizeRoles("admin"), createTicket);
+router.get("/tickets", protect, authorizeRoles("admin"), getMyTickets);
+router.get("/tickets/:id", protect, authorizeRoles("admin"), getTicketById);
 
-
-// Create new ticket
-router.post(
-  "/tickets",
-  protect,
-  authorizeRoles("admin"),
-  createTicket
-);
-
-// Get all tickets for the branch admin's branch
-router.get(
-  "/tickets",
-  protect,
-  authorizeRoles("admin"),
-  getMyTickets
-);
-
-// Get specific ticket by ID (only from their branch)
-router.get(
-  "/tickets/:id",
-  protect,
-  authorizeRoles("admin"),
-  getTicketById
-);
+router.get("/subscriptions/expiring", protect, authorizeRoles("admin"), getExpiringSubscriptions);
+router.get("/subscriptions/expired", protect, authorizeRoles("admin"), getExpiredSubscriptions);
 
 export default router;
-
-router.get('/subscriptions/expiring', getExpiringSubscriptions);
-
-router.get('/subscriptions/expired', getExpiredSubscriptions);
